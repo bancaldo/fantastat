@@ -3,6 +3,7 @@ import re
 import wx
 from model import Model
 from players.views.core import Core
+from django.db.utils import OperationalError
 
 
 class Controller(object):
@@ -22,23 +23,28 @@ class Controller(object):
         It initializes the frame widgets activating or deactivating
         radio boxes and menus
         """
-        players = self.get_players()
-        if players:
-            self.view.m_players_import.Enable(False)
-            self.enable_widgets(True)
-            evaluations = self.get_evaluations(day=1, role='goalkeeper')
-            if evaluations:
-                self.get_players_avg()
-                self.view.fill_players(players)
+        try:
+            players = self.get_players()
+            if players:
+                self.view.m_players_import.Enable(False)
+                self.enable_widgets(True)
+                evaluations = self.get_evaluations(day=1, role='goalkeeper')
+                if evaluations:
+                    self.get_players_avg()
+                    self.view.fill_players(players)
+                else:
+                    self.view.show_message(
+                        'No data to show, please import evaluations!')
+                    self.view.m_ev_import.Enable(True)
             else:
+                self.enable_widgets(False)
                 self.view.show_message(
-                    'No data to show, please import evaluations!')
-                self.view.m_ev_import.Enable(True)
-        else:
-            self.enable_widgets(False)
-            self.view.show_message(
-                'No players on database yet, please import them!')
-            self.view.m_ev_import.Enable(False)
+                    'No players on database yet, please import them!')
+                self.view.m_ev_import.Enable(False)
+        except OperationalError:
+            self.view.show_message("Database not found. Please use \n"
+                                   "'python manage.py makemigrations players'\n"
+                                   "and 'python manage.py migrate' commands")
 
     def enable_widgets(self, enable=True):
         """
