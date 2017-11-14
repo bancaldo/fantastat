@@ -1,0 +1,5 @@
+venv
+*.pyc
+*.zip
+.idea
+players.db
