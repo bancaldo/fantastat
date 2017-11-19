@@ -110,24 +110,6 @@ class Core(wx.Frame):
         self.Enable()
         subframe.Destroy()
 
-    def set_progress(self, count):
-        """
-        set_progress(count) -> None
-
-        It sets count value to progress bar and wait for 5 micro seconds
-        """
-        self.panel.status.set_progress(count)
-        self.panel.status.SetLabel('elaborating %s' % count)
-        wx.MicroSleep(5)
-
-    def set_range(self, max_limit):
-        """
-        set_range(max_limit) -> None
-
-        It sets the max range limit to progress bar
-        """
-        self.panel.status.set_range(max_limit)
-
     # noinspection PyUnusedLocal
     def on_refresh(self, event):
         """
@@ -140,6 +122,7 @@ class Core(wx.Frame):
         self.panel.players.DeleteAllItems()
         players = self.controller.get_players_by_role(role)
         if players:
+            self.show_on_statusbar("%s players found" % len(players))
             self.fill_players(players)
         else:
             self.panel.status.SetLabel('No players found')
@@ -271,7 +254,7 @@ class Core(wx.Frame):
         """
         self.Disable()
         ViewEvaluation(parent=self, title='New Evaluation')
-    
+
     # noinspection PyUnusedLocal
     def on_evs_summary(self, event):
         """
@@ -311,11 +294,15 @@ class Core(wx.Frame):
             self.panel.status.SetLabel('No player with code %s found'
                                        % player_code)
 
+    def show_on_statusbar(self, message):
+        self.panel.status.SetStatusText(message)
+
 
 class PanelCore(wx.Panel):
     def __init__(self, parent):
         super(PanelCore, self).__init__(parent=parent)
-        self.status = ProgressStatusBar(self)
+        self.status = wx.StatusBar(self, -1)
+        self.status.SetLabel('Ready')
 
         roles = ('goalkeeper', 'defender', 'midfielder', 'forward')
         self.rb_roles = wx.RadioBox(self, -1, "role", choices=roles,
@@ -345,95 +332,6 @@ class PanelCore(wx.Panel):
         sizer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
         sizer.Add(self.status, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(sizer)
-
-
-class ProgressStatusBar(wx.StatusBar):
-    """Custom StatusBar with a built-in progress bar"""
-    def __init__(self, parent, id_=wx.ID_ANY, style=wx.SB_FLAT,
-                 name='ProgressStatusBar'):
-        super(ProgressStatusBar, self).__init__(parent, id_, style, name)
-        self._changed = False
-        self.busy = False
-        self.timer = wx.Timer(self)
-        self.progress_bar = wx.Gauge(self, style=wx.GA_HORIZONTAL)
-        self.progress_bar.Hide()
-
-        self.SetFieldsCount(2)
-        self.SetStatusWidths([-1, 155])
-        # self.SetBackgroundColour('Pink')
-
-        self.Bind(wx.EVT_IDLE, lambda evt: self.__reposition())
-        self.Bind(wx.EVT_TIMER, self.on_timer)
-        self.Bind(wx.EVT_SIZE, self.on_size)
-
-    def __del__(self):
-        if self.timer.IsRunning():
-            self.timer.Stop()
-
-    def __reposition(self):
-        """Repositions the gauge as necessary"""
-        if self._changed:
-            field = self.GetFieldsCount() - 1
-            rect = self.GetFieldRect(field)
-            progress_bar_pos = (rect.x + 2, rect.y + 2)
-            self.progress_bar.SetPosition(progress_bar_pos)
-            progress_bar_size = (rect.width - 8, rect.height - 4)
-            self.progress_bar.SetSize(progress_bar_size)
-        self._changed = False
-
-    # noinspection PyUnusedLocal
-    def on_size(self, evt):
-        self._changed = True
-        self.__reposition()
-        evt.Skip()
-
-    # noinspection PyUnusedLocal
-    def on_timer(self, evt):
-        if not self.progress_bar.IsShown():
-            self.timer.Stop()
-        if self.busy:
-            self.progress_bar.Pulse()
-
-    def run(self, rate=100):
-        if not self.timer.IsRunning():
-            self.timer.Start(rate)
-
-    def get_progress(self):
-        return self.progress_bar.GetValue()
-
-    def set_progress(self, val):
-        if not self.progress_bar.IsShown():
-            self.show_progress(True)
-
-        if val == self.progress_bar.GetRange():
-            self.progress_bar.SetValue(0)
-            self.show_progress(False)
-        else:
-            self.progress_bar.SetValue(val)
-
-    def set_range(self, val):
-        if val != self.progress_bar.GetRange():
-            self.progress_bar.SetRange(val)
-
-    def show_progress(self, show=True):
-        self.__reposition()
-        self.progress_bar.Show(show)
-
-    def start_busy(self, rate=100):
-        self.busy = True
-        self.__reposition()
-        self.show_progress(True)
-        if not self.timer.IsRunning():
-            self.timer.Start(rate)
-
-    def stop_busy(self):
-        self.timer.Stop()
-        self.show_progress(False)
-        self.progress_bar.SetValue(0)
-        self.busy = False
-
-    def is_busy(self):
-        return self.busy
 
 
 class FileBrowser(wx.FileDialog):

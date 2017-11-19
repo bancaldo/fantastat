@@ -32,6 +32,7 @@ class Controller(object):
                 if evaluations:
                     self.get_players_avg()
                     self.view.fill_players(players)
+                    self.view.show_on_statusbar("Found %s players on db" % len(players))
                 else:
                     self.view.show_message(
                         'No data to show, please import evaluations!')
@@ -127,7 +128,7 @@ class Controller(object):
         self.model.clear_bulk_players()
         with open(path) as f:
             data = [line.strip() for line in f.readlines()]
-        self.view.set_range(len(data))
+        self.view.show_on_statusbar("importing players")
         print "INFO: importing players..."
         count = 1
         players_dict = self.model.get_players_data()
@@ -141,7 +142,8 @@ class Controller(object):
                 player_data = players_dict.get(int(code))
                 if name != player_data[0] or real_team != player_data[1]:
                     self.update_player(code, name, real_team, role, cost)
-            self.view.set_progress(count)
+            self.view.show_on_statusbar("importing data %s/%s" 
+                                        % (count, len(data)))
             self.view.Update()
             count += 1
         self.commit_all_players()
@@ -179,7 +181,6 @@ class Controller(object):
             if day:
                 with open(path) as f:
                     data = [line.strip() for line in f.readlines()]
-                self.view.set_range(len(data))
                 print "INFO: importing evaluations..."
                 count = 1
                 # string sample: 100|ALISSON|ROM|6.5|6.5|19
@@ -196,7 +197,8 @@ class Controller(object):
                         self.new_player(code, name, real_team, role, cost)
                         print "INFO: new player %s stored!" % code
                     self.import_ev_bulk(code, fv, v, cost, day)
-                    self.view.set_progress(count)
+                    self.view.show_on_statusbar("importing data %s/%s"
+                                                % (count, len(data)))
                     self.view.Update()
                     count += 1
                 self.commit_all_evaluations()
@@ -385,7 +387,6 @@ class Controller(object):
         print "INFO: days played -> %s" % played
         last_day = self.model.get_last_imported_day()
         players = self.model.get_players()
-        self.view.set_range(len(players))
         count = 1
         for player in players:
             fv_avg = self.model.get_avg(player=player, field='fanta_vote')
@@ -404,7 +405,8 @@ class Controller(object):
                 cost_indicator = '%s (-)' % player.cost
             self.d_avg[player.code] = (fv_avg, v_avg, rate, cost_indicator)
             count += 1
-            self.view.set_progress(count)
+            self.view.show_on_statusbar("calculating data %s/%s"
+                                        % (count, len(players)))
             self.view.Update()
         return self.d_avg
 
