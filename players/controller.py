@@ -164,7 +164,7 @@ class Controller(object):
         evs = self.get_evaluations(day=1, role='goalkeeper')
         if not evs:
             self.view.show_message('No evaluations found, please import them!')
-            self.view.panel.status.SetLabel('No evaluations in database')
+            self.view.set_status_text('No evaluations in database')
             self.view.m_ev_import.Enable(True)
         else:
             players = self.get_players()
