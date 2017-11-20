@@ -26,6 +26,13 @@ class Core(wx.Frame):
         self.sub_view = None
         self.panel = PanelCore(self)
         self.panel.SetBackgroundColour('LightGray')
+        self.status_bar = self.CreateStatusBar(2)
+        self.status_bar.SetStatusWidths([200, -1])
+        pos_x, pos_y, dim_x, dim_y = self.status_bar.GetFieldRect(1)
+        gauge_pos = (pos_x, pos_y)
+        gauge_size = (dim_x, dim_y)
+        self.gauge = wx.Gauge(self.status_bar, -1, 100, gauge_pos, gauge_size)
+
         # Menues
         self.menubar = wx.MenuBar()
         self.SetMenuBar(self.menubar)
@@ -63,12 +70,37 @@ class Core(wx.Frame):
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.players)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list, self.panel.players)
-
+        self.Bind(wx.EVT_SIZE, self.on_size)
         size = (600, 600)
         self.SetSize(size)
         self.Show()
 
     # Core Frame methods
+    def get_gauge_dimensions(self):
+        pos_x, pos_y, dim_x, dim_y = self.status_bar.GetFieldRect(1)
+        return (pos_x, pos_y), (dim_x, dim_y)
+
+    def on_size(self, event):
+        size = self.GetSize()
+        self.SetSize(size)
+        pos_x, pos_y, dim_x, dim_y = self.status_bar.GetFieldRect(1)
+        gauge_size = (dim_x, dim_y)
+        self.gauge.SetSize(gauge_size)
+        event.Skip()
+        self.Update()
+
+    def set_range(self, value):
+        """Set the range of gauge"""
+        self.gauge.SetRange(value)
+
+    def set_progress(self, value):
+        """Set the indicator gauges progress"""
+        self.gauge.SetValue(value)
+
+    def set_status_text(self, value):
+        """Set the indicator text gauges progress"""
+        self.status_bar.SetStatusText(value)
+
     # noinspection PyUnusedLocal
     def on_quit(self, event):
         """
@@ -122,10 +154,10 @@ class Core(wx.Frame):
         self.panel.players.DeleteAllItems()
         players = self.controller.get_players_by_role(role)
         if players:
-            self.show_on_statusbar("%s players found" % len(players))
+            self.set_status_text("%s players found" % len(players))
             self.fill_players(players)
         else:
-            self.panel.status.SetLabel('No players found')
+            self.set_status_text('No players found')
 
     def on_list_column(self, event):
         """
@@ -141,7 +173,7 @@ class Core(wx.Frame):
         if players:
             self.fill_players(players)
         else:
-            self.panel.status.SetLabel('No players found')
+            self.set_status_text('No players found')
 
     def fill_players(self, players):
         """
@@ -154,9 +186,9 @@ class Core(wx.Frame):
             try:
                 avg_fv, avg_v, rate, d_cost = avg_data.get(player.code)
             except TypeError:
-                self.panel.status.SetLabel('No data to show')
+                self.set_status_text('No data to show')
             except ValueError:
-                self.panel.status.SetLabel(
+                self.set_status_text(
                     'Invalid file format: file strings must be:'
                     '\n nnn|NAME|TEAM|n.n|n.n|n')
             else:
@@ -210,7 +242,7 @@ class Core(wx.Frame):
         if choice == wx.YES:
             self.controller.delete_all_data()
             self.panel.players.DeleteAllItems()
-            self.panel.status.SetLabel('All data deleted!')
+            self.set_status_text('All data deleted!')
             self.m_ev_import.Enable(False)
             self.m_players_import.Enable(True)
 
@@ -227,7 +259,7 @@ class Core(wx.Frame):
             self.controller.import_players(path)
             self.m_players_import.Enable(False)
         else:
-            self.panel.status.SetLabel('No file selected!')
+            self.set_status_text('No file selected!')
 
     # Evaluation section
     # noinspection PyUnusedLocal
@@ -242,7 +274,7 @@ class Core(wx.Frame):
         if path:
             self.controller.import_evaluations(path)
         else:
-            self.panel.status.SetLabel('No file selected!')
+            self.set_status_text('No file selected!')
 
     # noinspection PyUnusedLocal
     def new_evaluation(self, event):
@@ -291,18 +323,12 @@ class Core(wx.Frame):
             view_edit.panel.cost.SetValue(str(player.cost))
             view_edit.SetWindowStyle(wx.STAY_ON_TOP)
         else:
-            self.panel.status.SetLabel('No player with code %s found'
-                                       % player_code)
-
-    def show_on_statusbar(self, message):
-        self.panel.status.SetStatusText(message)
+            self.set_status_text('No player with code %s found' % player_code)
 
 
 class PanelCore(wx.Panel):
     def __init__(self, parent):
         super(PanelCore, self).__init__(parent=parent)
-        self.status = wx.StatusBar(self, -1)
-        self.status.SetLabel('Ready')
 
         roles = ('goalkeeper', 'defender', 'midfielder', 'forward')
         self.rb_roles = wx.RadioBox(self, -1, "role", choices=roles,
@@ -316,10 +342,8 @@ class PanelCore(wx.Panel):
         self.players.InsertColumn(4, 'dv', width=50)
         self.players.InsertColumn(5, 'rate', width=50)
         self.players.InsertColumn(6, 'cost', width=50)
-
         players_box = wx.BoxSizer(wx.HORIZONTAL)
         players_box.Add(self.players, 1, wx.EXPAND)
-
         btn_sizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_refresh = wx.Button(self, wx.ID_OK, label="Refresh")
@@ -330,7 +354,6 @@ class PanelCore(wx.Panel):
         sizer.Add(self.rb_roles, 0, wx.EXPAND | wx.ALL, 5)
         sizer.Add(players_box, 1, wx.EXPAND | wx.ALL, 5)
         sizer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
-        sizer.Add(self.status, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(sizer)
 
 

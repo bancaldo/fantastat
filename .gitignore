@@ -1,5 +1,9 @@
 venv
+dist
+build
 *.pyc
 *.zip
 .idea
 players.db
+*.spec
+pyinstaller*
