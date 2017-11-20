@@ -71,6 +71,7 @@ class Core(wx.Frame):
         self.Bind(wx.EVT_SIZE, self.on_size)
         size = (600, 600)
         self.SetSize(size)
+        self.Centre()
         self.Show()
 
     # Core Frame methods
