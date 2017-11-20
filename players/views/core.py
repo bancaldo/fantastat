@@ -28,9 +28,7 @@ class Core(wx.Frame):
         self.panel.SetBackgroundColour('LightGray')
         self.status_bar = self.CreateStatusBar(2)
         self.status_bar.SetStatusWidths([200, -1])
-        pos_x, pos_y, dim_x, dim_y = self.status_bar.GetFieldRect(1)
-        gauge_pos = (pos_x, pos_y)
-        gauge_size = (dim_x, dim_y)
+        gauge_pos, gauge_size = self.get_gauge_dimensions()
         self.gauge = wx.Gauge(self.status_bar, -1, 100, gauge_pos, gauge_size)
 
         # Menues
@@ -77,28 +75,51 @@ class Core(wx.Frame):
 
     # Core Frame methods
     def get_gauge_dimensions(self):
+        """
+        get_gauge_dimensions(self) -> tuple_a, tuple_b
+
+        tuple_a is a tuple with x position and y position of seconf field
+        of the StatusBar
+        """
         pos_x, pos_y, dim_x, dim_y = self.status_bar.GetFieldRect(1)
         return (pos_x, pos_y), (dim_x, dim_y)
 
     def on_size(self, event):
+        """
+        on_size()
+
+        it redraws the gauge rectangle and repositions when frame windows is
+        resized
+        """
         size = self.GetSize()
         self.SetSize(size)
-        pos_x, pos_y, dim_x, dim_y = self.status_bar.GetFieldRect(1)
-        gauge_size = (dim_x, dim_y)
+        gauge_pos, gauge_size = self.get_gauge_dimensions()
         self.gauge.SetSize(gauge_size)
         event.Skip()
         self.Update()
 
     def set_range(self, value):
-        """Set the range of gauge"""
+        """
+        set_range(value)
+
+        It sets the maximum value of gauge widget
+        """
         self.gauge.SetRange(value)
 
     def set_progress(self, value):
-        """Set the indicator gauges progress"""
+        """
+        set_progress(value)
+
+        It sets the actual progress value to gauge widget
+        """
         self.gauge.SetValue(value)
 
     def set_status_text(self, value):
-        """Set the indicator text gauges progress"""
+        """
+        set_status_text(value)
+
+        It sets the text to the first field of StatusBar
+        """
         self.status_bar.SetStatusText(value)
 
     # noinspection PyUnusedLocal
