@@ -3,8 +3,7 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | \
-    wx.SYSTEM_MENU | wx.CAPTION | wx.CLIP_CHILDREN
+FRAME = wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -158,7 +157,7 @@ class ViewEvaluationSummary(wx.Frame):
     def __init__(self, parent, title):
         self.parent = parent
         super(ViewEvaluationSummary, self).__init__(parent=self.parent,
-                                                    title=title)
+                                                    title=title, style=FRAME)
         self.controller = self.parent.controller
         self.panel = PanelEvaluationSummary(parent=self)
         self.SetSize((600, 400))

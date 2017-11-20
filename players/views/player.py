@@ -3,8 +3,7 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | \
-    wx.SYSTEM_MENU | wx.CAPTION | wx.CLIP_CHILDREN
+FRAME = wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -161,7 +160,8 @@ class AutoWidthListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 class ViewPlayerSummary(wx.Frame):
     def __init__(self, parent, title):
         self.parent = parent
-        super(ViewPlayerSummary, self).__init__(parent=self.parent, title=title)
+        super(ViewPlayerSummary, self).__init__(parent=self.parent, title=title,
+                                                style=FRAME)
         self.controller = self.parent.controller
         self.panel = PanelPlayerSummary(parent=self)
         self.SetSize((600, 400))
