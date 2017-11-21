@@ -3,7 +3,8 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX
+FRAME = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | \
+    wx.SYSTEM_MENU | wx.CAPTION | wx.CLIP_CHILDREN
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -46,8 +47,17 @@ class ViewEvaluation(wx.Frame):
         if not code or not fv or not v or not cost or not day:
             self.show_message("WARNING: You have to fill all fields")
         else:
-            self.controller.new_evaluation(code, fv, v, cost, day)
-            self.clear_text_controls()
+            if self.is_editor:
+                self.controller.update_evaluation(code, fv, v, cost, day)
+                self.show_message("Evaluation %s code %s updated!"
+                                  % (day, code))
+            else:
+                self.controller.new_evaluation(code, fv, v, cost, day)
+                self.show_message("New Evaluation %s code %s stored!"
+                                  % (day, code))
+            self.parent.Enable()
+            self.parent.on_refresh(None)
+            self.Destroy()
 
     # noinspection PyUnusedLocal
     def delete_evaluation(self, event):
@@ -60,8 +70,12 @@ class ViewEvaluation(wx.Frame):
                                wx.YES_NO | wx.ICON_WARNING)
         if choice == wx.YES:
             code = self.panel.code.GetValue()
-            self.controller.delete_evaluation(int(code))
-            self.clear_text_controls()
+            day = self.panel.day.GetValue()
+            self.controller.delete_evaluation(int(code), day)
+            self.show_message("Evaluation %s code %s deleted!" % (day, code))
+            self.parent.Enable()
+            self.parent.on_refresh(None)
+            self.Destroy()
         else:
             choice.Destroy()
 
@@ -74,30 +88,6 @@ class ViewEvaluation(wx.Frame):
         for w in [w for w in self.panel.GetChildren()
                   if isinstance(w, wx.TextCtrl)]:
             w.SetValue('')
-
-    # noinspection PyUnusedLocal
-    def update_evaluation(self, event):
-        """
-        update_evaluation(event) -> Call 'update_evaluation' controller method
-
-        Callback bound to 'Save' button which updates evaluation values after
-        user modifies them in the edit frame.
-        Edit frame is invoked when listcontrol is clicked by user
-        """
-        code = self.panel.code.GetValue()
-        fv = self.panel.fv.GetValue()
-        v = self.panel.v.GetValue()
-        cost = self.panel.cost.GetValue()
-        day = self.panel.day.GetValue()
-        if code and fv and v and cost and day:
-            evaluation = self.controller.get_evaluation(code=code, day=int(day))
-            self.controller.set_temporary_object(evaluation)
-            self.controller.update_evaluation(code, fv, v, cost, day)
-            self.clear_text_controls()
-            self.show_message("INFO: evaluation %s updated" % code)
-        else:
-            self.show_message("ERROR: Missing fields, please fill them")
-        self.Destroy()
 
     @staticmethod
     def show_message(string):
@@ -237,13 +227,15 @@ class ViewEvaluationSummary(wx.Frame):
         evaluation = self.controller.get_evaluation(int(code), int(day))
         if evaluation:
             self.controller.set_temporary_object(evaluation)
-            view_edit = ViewEvaluation(self.parent, "Edit Evaluation",
+            self.Disable()
+            view_edit = ViewEvaluation(self, "Edit Evaluation",
                                        is_editor=True)
             view_edit.panel.code.SetValue(str(evaluation.player.code))
             view_edit.panel.fv.SetValue(str(evaluation.fanta_vote))
             view_edit.panel.v.SetValue(str(evaluation.vote))
             view_edit.panel.cost.SetValue(str(evaluation.cost))
             view_edit.panel.day.SetValue(str(evaluation.day))
+            view_edit.panel.btn_delete.Enable()
             view_edit.SetWindowStyle(wx.STAY_ON_TOP)
         else:
             self.show_message('No evaluation with day %s and code %s found'
@@ -257,6 +249,28 @@ class ViewEvaluationSummary(wx.Frame):
         It shows a message box with string as message.
         """
         wx.MessageBox(string, 'core info', wx.OK | wx.ICON_EXCLAMATION)
+
+    @staticmethod
+    def show_subframe(child):
+        """
+        show_subframe(widget) -> None
+
+        It shows the widget subframe in a centred position
+        """
+        child.Centre()
+        child.Show()
+
+    def quit_subframe(self, event):
+        """
+        quit_subframe(event) -> None
+
+        It quits the subframe and enables the parent frame
+        """
+        subframe = event.GetEventObject().GetParent()
+        if isinstance(subframe, wx.Panel):
+            subframe = subframe.GetParent()
+        self.Enable()
+        subframe.Destroy()
 
 
 class PanelEvaluationSummary(wx.Panel):

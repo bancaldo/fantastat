@@ -114,11 +114,12 @@ class Controller(object):
 
     def new_player(self, code, name, real_team, role, cost):
         """
-        new_player(code, name, real_team, role, cost) -> Player oblect
+        new_player(code, name, real_team, role, cost) -> Player object
 
         it creates a new player object
         """
-        return self.model.new_player(code, name, real_team, role, cost)
+        self.model.new_player(code, name, real_team, role, cost)
+        self.get_players_avg()
 
     def import_players(self, path):
         """
@@ -134,7 +135,7 @@ class Controller(object):
         count = 1
         players_dict = self.model.get_players_data()
         self.view.set_range(len(data))
-        # string sample: 100|ALISSON|ROM|6.5|6.5|19
+        # string sample: 100|NAME|ROM|6.5|6.5|19
         for s in data:
             code, name, real_team, fv, v, cost = s.strip().split('|')
             role = self.get_role(code)
@@ -159,7 +160,7 @@ class Controller(object):
         """
         show_data()
 
-        it shows the data in listcontrol
+        it shows the data in list control
         """
         evs = self.get_evaluations(day=1, role='goalkeeper')
         if not evs:
@@ -188,7 +189,7 @@ class Controller(object):
                 print "INFO: importing evaluations..."
                 self.view.set_range(len(data))
                 count = 1
-                # string sample: 100|ALISSON|ROM|6.5|6.5|19
+                # string sample: 100|NAME|ROM|6.5|6.5|19
                 day_evs = self.get_evaluations(day=day, role='goalkeeper')
                 if day_evs:
                     self.delete_day_evaluations(day)
@@ -225,7 +226,7 @@ class Controller(object):
         """
         delete_player(code)
 
-        It detetes player with code=code
+        It deletes player with code=code
         """
         return self.model.delete_player(code)
 
@@ -233,16 +234,24 @@ class Controller(object):
         """
         delete_all_data()
 
-        It detetes all the players and all the evaluations stored in database
+        It deletes all the players and all the evaluations stored in database
         """
         self.model.delete_all_players()
         self.model.delete_all_evaluations()
+
+    def delete_evaluation(self, code, day):
+        """
+        delete_evaluation(code, day)
+
+        It deletes the evaluation of day=day and player.code=code
+        """
+        self.model.delete_evaluation(code, day)
 
     def delete_day_evaluations(self, day):
         """
         delete_day_evaluations(day)
 
-        It detetes all the evaluations stored in database with day=day
+        It deletes all the evaluations stored in database with day=day
         """
         self.model.delete_day_evaluations(day)
         print "INFO: all evaluations with day %s deleted!" % day
@@ -324,7 +333,7 @@ class Controller(object):
 
         It updates Player values and return Player object
         """
-        return self.model.update_player(code, name, real_team, role, cost)
+        self.model.update_player(code, name, real_team, role, cost)
 
     def update_evaluation(self, code, fv, v, cost, day):
         """
@@ -332,7 +341,19 @@ class Controller(object):
 
         It updates Evaluation values and return Evaluation object
         """
-        return self.model.update_player(code, fv, v, cost, day)
+        self.model.update_evaluation(code, fv, v, cost, day)
+
+    def new_evaluation(self, code, fv, v, cost, day):
+        """
+        new_evaluation(code, fv, v, cost, day)
+
+        it creates a new evaluation object
+        """
+        if not self.get_player_by_code(int(code)):
+            self.view.show_message("You must create player with code %s before"
+                                   % code)
+        else:
+            self.model.new_evaluation(code, fv, v, cost, day)
 
     def get_evaluation(self, code, day):
         """

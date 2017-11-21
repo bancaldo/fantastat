@@ -3,7 +3,8 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX
+FRAME = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | \
+    wx.SYSTEM_MENU | wx.CAPTION | wx.CLIP_CHILDREN
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -29,8 +30,7 @@ class ViewPlayer(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.delete_player, self.panel.btn_delete)
         if self.is_editor:
             self.panel.btn_delete.Enable()
-
-        self.parent.show_subframe(self)  # Show and center the frame
+        self.parent.show_subframe(self)
 
     # noinspection PyUnusedLocal
     def on_save(self, event):
@@ -48,8 +48,16 @@ class ViewPlayer(wx.Frame):
         else:
             real_team = self.panel.real_team.GetValue()
             role = self.panel.role.GetValue()
-            self.controller.new_player(code, name, real_team, role)
-            self.clear_text_controls()
+            cost = self.panel.cost.GetValue()
+            if self.is_editor:
+                self.controller.update_player(code, name, real_team, role, cost)
+                self.show_message("Player %s [%s] updated!" % (name, code))
+            else:
+                self.controller.new_player(code, name, real_team, role, cost)
+                self.show_message("New Player %s [%s] stored!" % (name, code))
+            self.parent.Enable()
+            self.parent.on_refresh(None)
+            self.Destroy()
 
     # noinspection PyUnusedLocal
     def delete_player(self, event):
@@ -65,7 +73,10 @@ class ViewPlayer(wx.Frame):
         if choice == wx.YES:
             code = self.panel.code.GetValue()
             self.controller.delete_player(int(code))
-            self.clear_text_controls()
+            self.show_message("Player [%s] deleted!" % code)
+            self.parent.Enable()
+            self.parent.on_refresh(None)
+            self.Destroy()
         else:
             choice.Destroy()
 
@@ -78,29 +89,6 @@ class ViewPlayer(wx.Frame):
         for w in [w for w in self.panel.GetChildren()
                   if isinstance(w, wx.TextCtrl)]:
             w.SetValue('')
-
-    # noinspection PyUnusedLocal
-    def update_player(self, event):
-        """
-        update_player(event) -> Call 'update_player' controller method
-
-        Callback bound to 'Save' button wich updates player values after
-        user modifies them in the edit frame.
-        Edit frame is invoked when listcontrol is clicked by user
-        """
-        code = self.panel.code.GetValue()
-        name = self.panel.name.GetValue()
-        real_team = self.panel.real_team.GetValue()
-        role = self.panel.role.GetValue()
-        cost = self.panel.cost.GetValue()
-        if code and name:
-            player = self.controller.update_player(code, name, real_team,
-                                                   role, cost)
-            self.clear_text_controls()
-            self.show_message("INFO: player %s updated" % code)
-        else:
-            self.show_message("ERROR: Missing fields, please fill them")
-        self.Destroy()
 
     @staticmethod
     def show_message(string):
@@ -230,7 +218,8 @@ class ViewPlayerSummary(wx.Frame):
         player = self.controller.get_player_by_code(int(code))
         if player:
             self.controller.set_temporary_object(player)
-            view_edit = ViewPlayer(self.parent, "Edit Player", is_editor=True)
+            self.Disable()
+            view_edit = ViewPlayer(self, "Edit Player", is_editor=True)
             view_edit.panel.code.SetValue(str(player.code))
             view_edit.panel.name.SetValue(player.name)
             view_edit.panel.real_team.SetValue(player.real_team)
@@ -268,6 +257,28 @@ class ViewPlayerSummary(wx.Frame):
         It shows a message box with string as message.
         """
         wx.MessageBox(string, 'core info', wx.OK | wx.ICON_EXCLAMATION)
+
+    @staticmethod
+    def show_subframe(child):
+        """
+        show_subframe(widget) -> None
+
+        It shows the widget subframe in a centred position
+        """
+        child.Centre()
+        child.Show()
+
+    def quit_subframe(self, event):
+        """
+        quit_subframe(event) -> None
+
+        It quits the subframe and enables the parent frame
+        """
+        subframe = event.GetEventObject().GetParent()
+        if isinstance(subframe, wx.Panel):
+            subframe = subframe.GetParent()
+        self.Enable()
+        subframe.Destroy()
 
 
 class PanelPlayerSummary(wx.Panel):

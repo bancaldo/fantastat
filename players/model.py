@@ -45,7 +45,7 @@ class Model(object):
     @staticmethod
     def new_player(code, name, real_team, role, cost):
         """
-        new_player(code, name, real_team, role, cost) -> Player oblect
+        new_player(code, name, real_team, role, cost) -> Player object
 
         it creates a new player object
         """
@@ -113,7 +113,7 @@ class Model(object):
         """
         delete_all_players()
 
-        It detetes all the players stored in database
+        It deletes all the players stored in database
         """
         Player.objects.all().delete()
 
@@ -121,7 +121,7 @@ class Model(object):
         """
         delete_player(code)
 
-        It detetes player with code=code
+        It deletes player with code=code
         """
         player = self.get_player_by_code(int(code))
         if player:
@@ -177,15 +177,16 @@ class Model(object):
 
     def new_evaluation(self, code, fv, v, cost, day):
         """
-        new_evaluation(code, fv, v, cost, day) -> Evaluation oblect
+        new_evaluation(code, fv, v, cost, day) -> Evaluation object
 
         it creates a new evaluation object
         """
         player = self.get_player_by_code(int(code))
-        evaluation = Evaluation.objects.create(fanta_vote=float(fv),
-                                               vote=float(v), cost=int(cost),
-                                               player=player, day=int(day))
-        return evaluation
+        if player:
+            ev = Evaluation.objects.create(fanta_vote=float(fv),
+                                           vote=float(v), cost=int(cost),
+                                           player=player, day=int(day))
+            return ev
 
     @staticmethod
     def get_evaluations(day, role=None):
@@ -196,9 +197,11 @@ class Model(object):
         Player role=role
         """
         if role:
-            return Evaluation.objects.filter(player__role=role.lower(),
-                                             day=int(day)).all()
-        return Evaluation.objects.filter(day=int(day)).all()
+            return Evaluation.objects.filter(
+                player__role=role.lower(),
+                day=int(day)).order_by('player__code').all()
+        return Evaluation.objects.filter(
+            day=int(day)).order_by('player__code').all()
 
     def get_evaluation(self, code, day):
         """
@@ -218,11 +221,10 @@ class Model(object):
         ev = self.get_evaluation(int(code), day)
         if not ev:
             ev = self.get_temporary_object()
-        ev.fv = fv
-        ev.v = v
+        ev.fanta_vote = fv
+        ev.vote = v
         ev.cost = cost
         ev.save()
-        print "INFO: Evaluation %s day %s updated!" % (code, day)
         return ev
 
     def add_new_ev_to_bulk(self, code, fv, v, cost, day):
@@ -251,16 +253,26 @@ class Model(object):
         """
         delete_day_evaluations(day)
 
-        It detetes all the evaluations stored in database with day=day
+        It deletes all the evaluations stored in database with day=day
         """
         Evaluation.objects.filter(day=int(day)).all().delete()
+
+    @staticmethod
+    def delete_evaluation(code, day):
+        """
+        delete_evaluation(code, day)
+
+        It deletes the evaluation of day=day and player.code=code
+        """
+        Evaluation.objects.filter(player__code=int(code),
+                                  day=int(day)).all().delete()
 
     @staticmethod
     def delete_all_evaluations():
         """
         delete_all_evaluations()
 
-        It detetes all the evaluations stored in database
+        It deletes all the evaluations stored in database
         """
         Evaluation.objects.all().delete()
 

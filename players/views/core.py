@@ -337,6 +337,7 @@ class Core(wx.Frame):
         player = self.controller.get_player_by_code(player_code)
         if player:
             self.controller.set_temporary_object(player)
+            self.Disable()
             view_edit = ViewPlayer(self, "Edit player", is_editor=True)
             view_edit.panel.code.SetValue(str(player_code))
             view_edit.panel.name.SetValue(player.name)
