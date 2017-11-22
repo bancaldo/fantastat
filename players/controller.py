@@ -398,6 +398,18 @@ class Controller(object):
         """
         return self.model.get_evaluations(role=role, day=day)
 
+    def get_sorted_evaluations(self, id_c, role, day):
+        """
+        get_sorted_evaluations(id_c, role, day) -> list of Evaluations
+
+        It returns a list of Evaluation objects filtered by role, day and
+        sorted by id_column id_c
+        """
+        columns = {0: 'player__code', 1: 'player__name', 2: 'player__real_team',
+                   3: '-fanta_vote', 4: '-vote', 5: '-cost'}
+        return self.model.get_evaluations_ordered_by_filter(columns.get(id_c),
+                                                            role, int(day))
+
     def get_players_avg(self):
         """
         get_players_avg() -> dictionary

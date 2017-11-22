@@ -3,8 +3,7 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | \
-    wx.SYSTEM_MENU | wx.CAPTION | wx.CLIP_CHILDREN
+FRAME = wx.CAPTION | wx.CLIP_CHILDREN
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -25,19 +24,20 @@ class ViewPlayer(wx.Frame):
         self.panel.btn_delete.Disable()
         self.SetSize((350, 250))
         # bindings
-        self.Bind(wx.EVT_BUTTON, self.parent.quit_subframe, self.panel.btn_quit)
+        self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_save, self.panel.btn_save)
         self.Bind(wx.EVT_BUTTON, self.delete_player, self.panel.btn_delete)
         if self.is_editor:
             self.panel.btn_delete.Enable()
-        self.parent.show_subframe(self)
+        self.Centre()
+        self.Show()
 
     # noinspection PyUnusedLocal
     def on_save(self, event):
         """
         on_save(event) -> Call 'new_player' controller method
 
-        Callback bound to 'Save' button wich saves new player on database
+        Callback bound to 'Save' button which saves new player on database
         """
         code = self.panel.code.GetValue()
         name = self.panel.name.GetValue()
@@ -64,12 +64,11 @@ class ViewPlayer(wx.Frame):
         """
         delete_player(event) -> Call 'delete_player' controller method
 
-        Callback bound to 'delete' button wich deletes a player from db
+        Callback bound to 'delete' button which deletes a player from db
         Player Evaluations will be deleted by cascade attribute set
         in models.
         """
-        choice = wx.MessageBox('Deleting player...are you sure?', 'warning',
-                               wx.YES_NO | wx.ICON_WARNING)
+        choice = wx.MessageBox('Deleting player...are you sure?', 'warning', YN)
         if choice == wx.YES:
             code = self.panel.code.GetValue()
             self.controller.delete_player(int(code))
@@ -97,7 +96,19 @@ class ViewPlayer(wx.Frame):
 
         It shows a message box with string as message.
         """
-        wx.MessageBox(string, 'core info', wx.OK | wx.ICON_EXCLAMATION)
+        wx.MessageBox(string, 'core info', OK)
+
+    # noinspection PyUnusedLocal
+    def on_quit(self, event):
+        """
+        on_quit(event) -> Call 'Destroy' frame method
+
+        Callback bound to 'quit' button which destroys the frame and re-focus on
+        main frame
+        """
+        self.parent.Enable()
+        self.parent.SetFocus()
+        self.Destroy()
 
 
 class PanelPlayer(wx.Panel):
@@ -129,9 +140,9 @@ class PanelPlayer(wx.Panel):
         self.btn_delete = wx.Button(self, wx.ID_DELETE)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_quit.SetDefault()
-        button_sizer.Add(self.btn_save, 0, wx.ALIGN_CENTER_VERTICAL)
-        button_sizer.Add(self.btn_delete, 0, wx.ALIGN_CENTER_VERTICAL)
-        button_sizer.Add(self.btn_quit, 0, wx.ALIGN_CENTER_VERTICAL)
+        button_sizer.Add(self.btn_save, 0, ACV)
+        button_sizer.Add(self.btn_delete, 0, ACV)
+        button_sizer.Add(self.btn_quit, 0, ACV)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(text_sizer, 0, wx.EXPAND | wx.ALL, 5)
         sizer.Add(button_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 5)
@@ -152,25 +163,28 @@ class ViewPlayerSummary(wx.Frame):
                                                 style=FRAME)
         self.controller = self.parent.controller
         self.panel = PanelPlayerSummary(parent=self)
-        self.SetSize((600, 400))
+        self.SetSize((600, 600))
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list,
                   self.panel.player_list)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.player_list)
-        self.Bind(wx.EVT_BUTTON, self.parent.quit_subframe, self.panel.btn_quit)
+        self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
         self.Bind(wx.EVT_RADIOBOX, self.on_refresh, self.panel.rb_roles)
-
-        self.parent.show_subframe(self)  # Show and center the frame
+        self.Centre()
+        self.Show()
 
     # noinspection PyUnusedLocal
     def on_quit(self, event):
         """
         on_quit(event) -> Call 'Destroy' frame method
 
-        Callback bound to 'quit' button which destroys the frame
+        Callback bound to 'quit' button which destroys the frame and re-focus on
+        main frame
         """
+        self.parent.Enable()
+        self.parent.SetFocus()
         self.Destroy()
 
     # noinspection PyUnusedLocal
@@ -178,8 +192,8 @@ class ViewPlayerSummary(wx.Frame):
         """
         on_refresh(event) -> None
 
-        Callback bound to 'refresh' button wich refreshes values shown by
-        listcontrol
+        Callback bound to 'refresh' button which refreshes values shown by
+        list control
         """
         self.panel.player_list.DeleteAllItems()
         role = self.panel.rb_roles.GetStringSelection()
@@ -193,7 +207,7 @@ class ViewPlayerSummary(wx.Frame):
         """
         fill_player_list(players) -> None
 
-        It fills listcontrol with player values
+        It fills list control with player values
         """
         for player in players:
             index = self.panel.player_list.InsertStringItem(sys.maxint,
@@ -209,8 +223,8 @@ class ViewPlayerSummary(wx.Frame):
         """
         on_list(event) -> None
 
-        Callback bound to 'listcontrol' widget wich opens the edit frame to
-        update player values when click on a listcontrol row
+        Callback bound to 'list control' widget which opens the edit frame to
+        update player values when click on a list control row
         """
         role = self.panel.rb_roles.GetStringSelection()
         item_id = event.m_itemIndex
@@ -234,7 +248,7 @@ class ViewPlayerSummary(wx.Frame):
         """
         on_column(event) -> None
 
-        Callback bound to 'listcontrol' widget wich sorts shown values by
+        Callback bound to 'list control' widget which sorts shown values by
         column value
         """
         role = self.panel.rb_roles.GetStringSelection()
@@ -257,28 +271,6 @@ class ViewPlayerSummary(wx.Frame):
         It shows a message box with string as message.
         """
         wx.MessageBox(string, 'core info', wx.OK | wx.ICON_EXCLAMATION)
-
-    @staticmethod
-    def show_subframe(child):
-        """
-        show_subframe(widget) -> None
-
-        It shows the widget subframe in a centred position
-        """
-        child.Centre()
-        child.Show()
-
-    def quit_subframe(self, event):
-        """
-        quit_subframe(event) -> None
-
-        It quits the subframe and enables the parent frame
-        """
-        subframe = event.GetEventObject().GetParent()
-        if isinstance(subframe, wx.Panel):
-            subframe = subframe.GetParent()
-        self.Enable()
-        subframe.Destroy()
 
 
 class PanelPlayerSummary(wx.Panel):

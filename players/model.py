@@ -212,6 +212,18 @@ class Model(object):
         player = self.get_player_by_code(int(code))
         return Evaluation.objects.filter(player=player, day=int(day)).first()
 
+    @staticmethod
+    def get_evaluations_ordered_by_filter(filter_name, role, day):
+        """
+        get_evaluations_ordered_by_filter(filter_name, role, day)
+            -> list of Evaluations
+
+        It returns a list of Evaluation objects filtered by role, day and
+        sorted by filter_name
+        """
+        return Evaluation.objects.filter(player__role=role.lower(),
+                                         day=day).order_by(filter_name).all()
+
     def update_evaluation(self, code, fv, v, cost, day):
         """
         update_evaluation(code, fv, v, cost, day) -> Evaluation object

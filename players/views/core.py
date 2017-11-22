@@ -162,6 +162,7 @@ class Core(wx.Frame):
         if isinstance(subframe, wx.Panel):
             subframe = subframe.GetParent()
         self.Enable()
+        self.SetFocus()
         subframe.Destroy()
 
     # noinspection PyUnusedLocal
@@ -384,6 +385,6 @@ class FileBrowser(wx.FileDialog):
     def __init__(self, parent, ddir=os.getcwd()):
         wildcard = "File Evaluations (*.txt)|*.txt|" "Tutti i files (*.*)|*.*"
         super(FileBrowser, self).__init__(parent=parent, message='',
-                                          defaultDir=ddir,
-                                          wildcard=wildcard, style=wx.OPEN)
+                                          defaultDir=ddir, wildcard=wildcard,
+                                          style=wx.OPEN)
         self.ShowModal()
