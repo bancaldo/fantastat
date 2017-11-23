@@ -1,3 +1,23 @@
+'''
+Manages player evaluations and shows average values of players
+
+SYNOPSIS
+========
+::
+python main.py
+
+DESCRIPTION
+===========
+Import evaluations MagicCup files and shows players values as
+fanta_vote average, vote average, rate of played matches,
+player cost
+
+Modules
+=====
+Django for ORM only
+Wx for graphics
+'''
+
 import os
 
 # Django specific settings
