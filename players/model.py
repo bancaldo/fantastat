@@ -16,6 +16,7 @@ class Model(object):
 
         It stores the object passed as argument to get later
         """
+        print "[INFO] Set temporary object to %s" % obj
         self.temporary_object = obj
 
     def get_temporary_object(self):
@@ -24,6 +25,7 @@ class Model(object):
 
         It returns the temporary object stored previously
         """
+        print "[INFO] Retrieve temporary object %s" % self.temporary_object
         return self.temporary_object
 
     def set_day(self, value):
@@ -172,7 +174,7 @@ class Model(object):
         player.role = role.lower()
         player.cost = int(cost)
         player.save()
-        print "INFO: Player %s updated!" % name
+        print "[INFO] Player %s updated!" % name
         return player
 
     def new_evaluation(self, code, fv, v, cost, day):

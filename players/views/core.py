@@ -29,7 +29,7 @@ class Core(wx.Frame):
         gauge_pos, gauge_size = self.get_gauge_dimensions()
         self.gauge = wx.Gauge(self.status_bar, -1, 100, gauge_pos, gauge_size)
 
-        # Menues
+        # Menus
         self.menubar = wx.MenuBar()
         self.SetMenuBar(self.menubar)
         # Player menu
@@ -63,9 +63,11 @@ class Core(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_delete_data, self.m_delete)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
+        self.Bind(wx.EVT_BUTTON, self.on_edit, self.panel.btn_edit)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.players)
-        self.Bind(wx.EVT_COMMAND_LEFT_DCLICK, self.on_list, self.panel.players)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_selected,
+                  self.panel.players)
         self.Bind(wx.EVT_SIZE, self.on_size)
         size = (600, 600)
         self.SetSize(size)
@@ -149,6 +151,11 @@ class Core(wx.Frame):
         child.Centre()
         child.Show()
 
+    def on_selected(self, event):
+        code = event.GetItem().GetText()
+        player = self.controller.get_player_by_code(code)
+        self.controller.set_temporary_object(player)
+
     # noinspection PyUnusedLocal
     def quit_subframe(self, event):
         """
@@ -169,7 +176,7 @@ class Core(wx.Frame):
         on_refresh(event) -> None
 
         Callback bound to 'refresh' button wich refreshes values shown by
-        listcontrol
+        list control
         """
         role = self.panel.rb_roles.GetStringSelection()
         self.panel.players.DeleteAllItems()
@@ -184,7 +191,7 @@ class Core(wx.Frame):
         """
         on_column(event) -> None
 
-        Callback bound to 'listcontrol' widget wich sorts shown values by
+        Callback bound to 'list_control' widget wich sorts shown values by
         column value
         """
         role = self.panel.rb_roles.GetStringSelection()
@@ -200,7 +207,7 @@ class Core(wx.Frame):
         """
         fill_players(players) -> None
 
-        It fills listcontrol with player values and relatives avg values
+        It fills list_control with player values and relatives avg values
         """
         avg_data = self.controller.get_avg_dict()
         for player in players:
@@ -327,30 +334,25 @@ class Core(wx.Frame):
             self.show_message("No evaluations in database, please import them")
 
     # noinspection PyUnusedLocal
-    def on_list(self, event):
+    def on_edit(self, event):
         """
         on_list(event) -> None
 
-        Callback bound to 'listcontrol' widget wich opens the edit frame to
+        Callback bound to 'list_control' widget wich opens the edit frame to
         update player values when click on a listcontrol row
         """
-        item_id = event.GetSelection()
-        player_code = self.panel.players.GetItemText(item_id)
-        player = self.controller.get_player_by_code(player_code)
+        player = self.controller.get_temporary_object()
         if not self.child:
             self.child = ViewPlayer(self, "Edit player", is_editor=True)
             wx.CallAfter(self.child.Show)
-            event.Skip()
             if player:
-                self.controller.set_temporary_object(player)
-                self.child.panel.code.SetValue(str(player_code))
-                self.child.panel.name.SetValue(player.name)
-                self.child.panel.real_team.SetValue(player.real_team)
-                self.child.panel.role.SetValue(player.role)
-                self.child.panel.cost.SetValue(str(player.cost))
+                self.child.panel.code.ChangeValue(str(player.code))
+                self.child.panel.name.ChangeValue(str(player.name))
+                self.child.panel.real_team.ChangeValue(str(player.real_team))
+                self.child.panel.role.ChangeValue(str(player.role))
+                self.child.panel.cost.ChangeValue(str(player.cost))
             else:
-                self.set_status_text('No player with code %s found'
-                                     % player_code)
+                self.set_status_text('No player found')
 
 
 class PanelCore(wx.Panel):
@@ -371,11 +373,13 @@ class PanelCore(wx.Panel):
         self.players.InsertColumn(6, 'cost', width=50)
         players_box = wx.BoxSizer(wx.HORIZONTAL)
         players_box.Add(self.players, 1, wx.EXPAND)
-        btn_sizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
+        btn_sizer = wx.FlexGridSizer(rows=1, cols=3, hgap=5, vgap=5)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_refresh = wx.Button(self, wx.ID_OK, label="Refresh")
+        self.btn_edit = wx.Button(self, wx.ID_EDIT, label="Edit")
         btn_sizer.Add(self.btn_quit, 0, wx.EXPAND)
         btn_sizer.Add(self.btn_refresh, 0, wx.EXPAND)
+        btn_sizer.Add(self.btn_edit, 0, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rb_roles, 0, wx.EXPAND | wx.ALL, 5)

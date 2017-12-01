@@ -159,13 +159,20 @@ class ViewEvaluationSummary(wx.Frame):
 
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.evaluation_list)
-        self.Bind(wx.EVT_COMMAND_LEFT_DCLICK, self.on_list,
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_selected,
                   self.panel.evaluation_list)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
+        self.Bind(wx.EVT_BUTTON, self.on_edit, self.panel.btn_edit)
         self.Bind(wx.EVT_RADIOBOX, self.on_refresh, self.panel.rb_roles)
         self.Bind(wx.EVT_COMBOBOX, self.on_refresh, self.panel.cb_days)
         self.Centre()
+
+    def on_selected(self, event):
+        code = event.GetItem().GetText()
+        day = self.panel.cb_days.GetStringSelection()
+        evaluation = self.controller.get_evaluation(int(code), int(day))
+        self.controller.set_temporary_object(evaluation)
 
     # noinspection PyUnusedLocal
     def on_refresh(self, event):
@@ -210,7 +217,7 @@ class ViewEvaluationSummary(wx.Frame):
                 index, 6, str(evaluation.day))
 
     # noinspection PyUnusedLocal
-    def on_list(self, event):
+    def on_edit(self, event):
         """
         on_list(event) -> None
 
@@ -218,27 +225,20 @@ class ViewEvaluationSummary(wx.Frame):
         update evaluation values when click on a list control row
         """
         role = self.panel.rb_roles.GetStringSelection()
-        item_id = event.GetSelection()
-        code = self.panel.evaluation_list.GetItemText(item_id)
-        item_day = self.panel.evaluation_list.GetItem(item_id, 6)
-        day = item_day.GetText()
-        evaluation = self.controller.get_evaluation(int(code), int(day))
+        evaluation = self.controller.get_temporary_object()
         if not self.child:
             self.child = ViewEvaluation(self, "Edit Evaluation",
                                         is_editor=True)
             wx.CallAfter(self.child.Show)
-            event.Skip()
             if evaluation:
-                self.controller.set_temporary_object(evaluation)
-                self.child.panel.code.SetValue(str(evaluation.player.code))
-                self.child.panel.fv.SetValue(str(evaluation.fanta_vote))
-                self.child.panel.v.SetValue(str(evaluation.vote))
-                self.child.panel.cost.SetValue(str(evaluation.cost))
-                self.child.panel.day.SetValue(str(evaluation.day))
+                self.child.panel.code.ChangeValue(str(evaluation.player.code))
+                self.child.panel.fv.ChangeValue(str(evaluation.fanta_vote))
+                self.child.panel.v.ChangeValue(str(evaluation.vote))
+                self.child.panel.cost.ChangeValue(str(evaluation.cost))
+                self.child.panel.day.ChangeValue(str(evaluation.day))
                 self.child.panel.btn_delete.Enable()
             else:
-                self.show_message('No evaluation with day %s and code %s found'
-                                  % (day, code))
+                self.show_message('No evaluation found')
 
     # noinspection PyUnusedLocal
     def on_list_column(self, event):
@@ -302,11 +302,13 @@ class PanelEvaluationSummary(wx.Panel):
 
         evaluation_list_box = wx.BoxSizer(wx.HORIZONTAL)
         evaluation_list_box.Add(self.evaluation_list, 1, wx.EXPAND)
-        btn_sizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
+        btn_sizer = wx.FlexGridSizer(rows=1, cols=3, hgap=5, vgap=5)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_refresh = wx.Button(self, wx.ID_OK, label="Refresh")
+        self.btn_edit = wx.Button(self, wx.ID_EDIT, label="Edit")
         btn_sizer.Add(self.btn_quit, 0, wx.EXPAND)
         btn_sizer.Add(self.btn_refresh, 0, wx.EXPAND)
+        btn_sizer.Add(self.btn_edit, 0, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rb_roles, 0, wx.EXPAND | wx.ALL, 5)

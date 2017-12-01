@@ -160,14 +160,20 @@ class ViewPlayerSummary(wx.Frame):
         self.panel = PanelPlayerSummary(parent=self)
         self.SetSize((600, 600))
 
-        self.Bind(wx.EVT_COMMAND_LEFT_DCLICK, self.on_list,
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_selected,
                   self.panel.player_list)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.player_list)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
+        self.Bind(wx.EVT_BUTTON, self.on_edit, self.panel.btn_edit)
         self.Bind(wx.EVT_RADIOBOX, self.on_refresh, self.panel.rb_roles)
         self.Centre()
+
+    def on_selected(self, event):
+        code = event.GetItem().GetText()
+        player = self.controller.get_player_by_code(code)
+        self.controller.set_temporary_object(player)
 
     # noinspection PyUnusedLocal
     def on_quit(self, event):
@@ -211,7 +217,7 @@ class ViewPlayerSummary(wx.Frame):
             self.panel.player_list.SetStringItem(index, 4, str(player.cost))
 
     # noinspection PyUnusedLocal
-    def on_list(self, event):
+    def on_edit(self, event):
         """
         on_list(event) -> None
 
@@ -219,22 +225,18 @@ class ViewPlayerSummary(wx.Frame):
         update player values when click on a list control row
         """
         role = self.panel.rb_roles.GetStringSelection()
-        item_id = event.GetSelection()
-        code = self.panel.player_list.GetItemText(item_id)
-        player = self.controller.get_player_by_code(int(code))
+        player = self.controller.get_temporary_object()
         if not self.child:
             self.child = ViewPlayer(self, "Edit Player", is_editor=True)
             wx.CallAfter(self.child.Show)
-            event.Skip()
             if player:
-                self.controller.set_temporary_object(player)
-                self.child.panel.code.SetValue(str(player.code))
-                self.child.panel.name.SetValue(player.name)
-                self.child.panel.real_team.SetValue(player.real_team)
-                self.child.panel.role.ChangeValue(player.role)
+                self.child.panel.code.ChangeValue(str(player.code))
+                self.child.panel.name.ChangeValue(str(player.name))
+                self.child.panel.real_team.ChangeValue(str(player.real_team))
+                self.child.panel.role.ChangeValue(str(player.role))
                 self.child.panel.cost.ChangeValue(str(player.cost))
             else:
-                self.show_message('No player with code %s found' % code)
+                self.show_message('No player found')
 
     # noinspection PyUnusedLocal
     def on_list_column(self, event):
@@ -281,11 +283,13 @@ class PanelPlayerSummary(wx.Panel):
 
         player_list_box = wx.BoxSizer(wx.HORIZONTAL)
         player_list_box.Add(self.player_list, 1, wx.EXPAND)
-        btn_sizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
+        btn_sizer = wx.FlexGridSizer(rows=1, cols=3, hgap=5, vgap=5)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_refresh = wx.Button(self, wx.ID_OK, label="Refresh")
+        self.btn_edit = wx.Button(self, wx.ID_EDIT, label="Edit")
         btn_sizer.Add(self.btn_quit, 0, wx.EXPAND)
         btn_sizer.Add(self.btn_refresh, 0, wx.EXPAND)
+        btn_sizer.Add(self.btn_edit, 0, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rb_roles, 0, wx.EXPAND | wx.ALL, 5)
