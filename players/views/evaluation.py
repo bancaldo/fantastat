@@ -3,7 +3,6 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.CAPTION | wx.CLIP_CHILDREN
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -18,8 +17,7 @@ class ViewEvaluation(wx.Frame):
         self.title = title
         self.is_editor = is_editor
 
-        super(ViewEvaluation, self).__init__(parent=self.parent, title=title,
-                                             style=FRAME)
+        super(ViewEvaluation, self).__init__(parent=self.parent, title=title)
         self.controller = self.parent.controller
         self.panel = PanelEvaluation(parent=self)
         self.panel.btn_delete.Disable()
@@ -29,7 +27,6 @@ class ViewEvaluation(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_save, self.panel.btn_save)
         self.Bind(wx.EVT_BUTTON, self.delete_evaluation, self.panel.btn_delete)
         self.Centre()
-        self.Show()
 
     # noinspection PyUnusedLocal
     def on_save(self, event):
@@ -54,7 +51,6 @@ class ViewEvaluation(wx.Frame):
                 self.controller.new_evaluation(code, fv, v, cost, day)
                 self.show_message("New Evaluation %s code %s stored!"
                                   % (day, code))
-            self.parent.Enable()
             self.parent.on_refresh(None)
             self.Destroy()
 
@@ -72,7 +68,6 @@ class ViewEvaluation(wx.Frame):
             day = self.panel.day.GetValue()
             self.controller.delete_evaluation(int(code), day)
             self.show_message("Evaluation %s code %s deleted!" % (day, code))
-            self.parent.Enable()
             self.parent.on_refresh(None)
             self.Destroy()
         else:
@@ -105,8 +100,6 @@ class ViewEvaluation(wx.Frame):
         Callback bound to 'quit' button which destroys the frame and re-focus on
         main frame
         """
-        self.parent.Enable()
-        self.parent.SetFocus()
         self.Destroy()
 
 
@@ -158,21 +151,21 @@ class ViewEvaluationSummary(wx.Frame):
     def __init__(self, parent, title):
         self.parent = parent
         super(ViewEvaluationSummary, self).__init__(parent=self.parent,
-                                                    title=title, style=FRAME)
+                                                    title=title)
         self.controller = self.parent.controller
+        self.child = None
         self.panel = PanelEvaluationSummary(parent=self)
         self.SetSize((600, 600))
 
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.evaluation_list)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list,
+        self.Bind(wx.EVT_COMMAND_LEFT_DCLICK, self.on_list,
                   self.panel.evaluation_list)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
         self.Bind(wx.EVT_RADIOBOX, self.on_refresh, self.panel.rb_roles)
         self.Bind(wx.EVT_COMBOBOX, self.on_refresh, self.panel.cb_days)
         self.Centre()
-        self.Show()
 
     # noinspection PyUnusedLocal
     def on_refresh(self, event):
@@ -225,26 +218,27 @@ class ViewEvaluationSummary(wx.Frame):
         update evaluation values when click on a list control row
         """
         role = self.panel.rb_roles.GetStringSelection()
-        item_id = event.m_itemIndex
+        item_id = event.GetSelection()
         code = self.panel.evaluation_list.GetItemText(item_id)
         item_day = self.panel.evaluation_list.GetItem(item_id, 6)
         day = item_day.GetText()
         evaluation = self.controller.get_evaluation(int(code), int(day))
-        if evaluation:
-            self.controller.set_temporary_object(evaluation)
-            self.Disable()
-            view_edit = ViewEvaluation(self, "Edit Evaluation",
-                                       is_editor=True)
-            view_edit.panel.code.SetValue(str(evaluation.player.code))
-            view_edit.panel.fv.SetValue(str(evaluation.fanta_vote))
-            view_edit.panel.v.SetValue(str(evaluation.vote))
-            view_edit.panel.cost.SetValue(str(evaluation.cost))
-            view_edit.panel.day.SetValue(str(evaluation.day))
-            view_edit.panel.btn_delete.Enable()
-            view_edit.SetWindowStyle(wx.STAY_ON_TOP)
-        else:
-            self.show_message('No evaluation with day %s and code %s found'
-                              % (day, code))
+        if not self.child:
+            self.child = ViewEvaluation(self, "Edit Evaluation",
+                                        is_editor=True)
+            wx.CallAfter(self.child.Show)
+            event.Skip()
+            if evaluation:
+                self.controller.set_temporary_object(evaluation)
+                self.child.panel.code.SetValue(str(evaluation.player.code))
+                self.child.panel.fv.SetValue(str(evaluation.fanta_vote))
+                self.child.panel.v.SetValue(str(evaluation.vote))
+                self.child.panel.cost.SetValue(str(evaluation.cost))
+                self.child.panel.day.SetValue(str(evaluation.day))
+                self.child.panel.btn_delete.Enable()
+            else:
+                self.show_message('No evaluation with day %s and code %s found'
+                                  % (day, code))
 
     # noinspection PyUnusedLocal
     def on_list_column(self, event):
@@ -285,8 +279,6 @@ class ViewEvaluationSummary(wx.Frame):
         Callback bound to 'quit' button which destroys the frame and re-focus on
         main frame
         """
-        self.parent.Enable()
-        self.parent.SetFocus()
         self.Destroy()
 
 

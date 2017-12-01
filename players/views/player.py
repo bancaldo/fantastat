@@ -3,7 +3,6 @@ import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 
-FRAME = wx.CAPTION | wx.CLIP_CHILDREN
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
 ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
@@ -17,8 +16,7 @@ class ViewPlayer(wx.Frame):
         self.parent = parent
         self.title = title
         self.is_editor = is_editor
-        super(ViewPlayer, self).__init__(parent=self.parent, title=title,
-                                         style=FRAME)
+        super(ViewPlayer, self).__init__(parent=self.parent, title=title)
         self.controller = self.parent.controller
         self.panel = PanelPlayer(parent=self)
         self.panel.btn_delete.Disable()
@@ -30,7 +28,6 @@ class ViewPlayer(wx.Frame):
         if self.is_editor:
             self.panel.btn_delete.Enable()
         self.Centre()
-        self.Show()
 
     # noinspection PyUnusedLocal
     def on_save(self, event):
@@ -106,8 +103,6 @@ class ViewPlayer(wx.Frame):
         Callback bound to 'quit' button which destroys the frame and re-focus on
         main frame
         """
-        self.parent.Enable()
-        self.parent.SetFocus()
         self.Destroy()
 
 
@@ -159,13 +154,13 @@ class AutoWidthListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 class ViewPlayerSummary(wx.Frame):
     def __init__(self, parent, title):
         self.parent = parent
-        super(ViewPlayerSummary, self).__init__(parent=self.parent, title=title,
-                                                style=FRAME)
+        super(ViewPlayerSummary, self).__init__(parent=self.parent, title=title)
         self.controller = self.parent.controller
+        self.child = None
         self.panel = PanelPlayerSummary(parent=self)
         self.SetSize((600, 600))
 
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list,
+        self.Bind(wx.EVT_COMMAND_LEFT_DCLICK, self.on_list,
                   self.panel.player_list)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.player_list)
@@ -173,7 +168,6 @@ class ViewPlayerSummary(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
         self.Bind(wx.EVT_RADIOBOX, self.on_refresh, self.panel.rb_roles)
         self.Centre()
-        self.Show()
 
     # noinspection PyUnusedLocal
     def on_quit(self, event):
@@ -183,8 +177,6 @@ class ViewPlayerSummary(wx.Frame):
         Callback bound to 'quit' button which destroys the frame and re-focus on
         main frame
         """
-        self.parent.Enable()
-        self.parent.SetFocus()
         self.Destroy()
 
     # noinspection PyUnusedLocal
@@ -227,21 +219,22 @@ class ViewPlayerSummary(wx.Frame):
         update player values when click on a list control row
         """
         role = self.panel.rb_roles.GetStringSelection()
-        item_id = event.m_itemIndex
+        item_id = event.GetSelection()
         code = self.panel.player_list.GetItemText(item_id)
         player = self.controller.get_player_by_code(int(code))
-        if player:
-            self.controller.set_temporary_object(player)
-            self.Disable()
-            view_edit = ViewPlayer(self, "Edit Player", is_editor=True)
-            view_edit.panel.code.SetValue(str(player.code))
-            view_edit.panel.name.SetValue(player.name)
-            view_edit.panel.real_team.SetValue(player.real_team)
-            view_edit.panel.role.ChangeValue(player.role)
-            view_edit.panel.cost.ChangeValue(str(player.cost))
-            view_edit.SetWindowStyle(wx.STAY_ON_TOP)
-        else:
-            self.show_message('No player with code %s found' % code)
+        if not self.child:
+            self.child = ViewPlayer(self, "Edit Player", is_editor=True)
+            wx.CallAfter(self.child.Show)
+            event.Skip()
+            if player:
+                self.controller.set_temporary_object(player)
+                self.child.panel.code.SetValue(str(player.code))
+                self.child.panel.name.SetValue(player.name)
+                self.child.panel.real_team.SetValue(player.real_team)
+                self.child.panel.role.ChangeValue(player.role)
+                self.child.panel.cost.ChangeValue(str(player.cost))
+            else:
+                self.show_message('No player with code %s found' % code)
 
     # noinspection PyUnusedLocal
     def on_list_column(self, event):

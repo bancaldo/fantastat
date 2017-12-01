@@ -1,4 +1,4 @@
-'''
+"""
 Manages player evaluations and shows average values of players
 
 SYNOPSIS
@@ -16,7 +16,7 @@ Modules
 =====
 Django for ORM only
 Wx for graphics
-'''
+"""
 
 import os
 

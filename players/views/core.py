@@ -8,8 +8,6 @@ from evaluation import ViewEvaluation, ViewEvaluationSummary
 
 OK = wx.OK | wx.ICON_EXCLAMATION
 ACV = wx.ALIGN_CENTER_VERTICAL
-STYLE = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | \
-    wx.SYSTEM_MENU | wx.CAPTION | wx.CLIP_CHILDREN
 
 
 class AutoWidthListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
@@ -23,7 +21,7 @@ class Core(wx.Frame):
         super(Core, self).__init__(parent=parent, title=title)
         self.parent = parent
         self.controller = controller
-        self.sub_view = None
+        self.child = None
         self.panel = PanelCore(self)
         self.panel.SetBackgroundColour('LightGray')
         self.status_bar = self.CreateStatusBar(2)
@@ -67,7 +65,7 @@ class Core(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.players)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list, self.panel.players)
+        self.Bind(wx.EVT_COMMAND_LEFT_DCLICK, self.on_list, self.panel.players)
         self.Bind(wx.EVT_SIZE, self.on_size)
         size = (600, 600)
         self.SetSize(size)
@@ -234,8 +232,9 @@ class Core(wx.Frame):
         Callback bound to the 'new player' menu. It opens a frame
         to save a new player on database
         """
-        self.Disable()
-        ViewPlayer(parent=self, title='New Player')
+        if not self.child:
+            self.child = ViewPlayer(parent=self, title='New Player')
+            wx.CallAfter(self.child.Show)
 
     # noinspection PyUnusedLocal
     def on_players_summary(self, event):
@@ -247,9 +246,9 @@ class Core(wx.Frame):
         """
         players = self.controller.get_players()
         if players:
-            self.Disable()
-            summary = ViewPlayerSummary(parent=self, title='Players Summary')
-            summary.fill_player_list(players)
+            self.child = ViewPlayerSummary(parent=self, title='Players Summary')
+            wx.CallAfter(self.child.Show)
+            self.child.fill_player_list(players)
         else:
             self.show_message("No players in database, please import them")
 
@@ -307,8 +306,9 @@ class Core(wx.Frame):
         Callback bound to the 'new evaluation' menu. It opens a frame
         to save a new evaluation on database
         """
-        self.Disable()
-        ViewEvaluation(parent=self, title='New Evaluation')
+        if not self.child:
+            self.child = ViewEvaluation(parent=self, title='New Evaluation')
+            wx.CallAfter(self.child.Show)
 
     # noinspection PyUnusedLocal
     def on_evs_summary(self, event):
@@ -320,8 +320,9 @@ class Core(wx.Frame):
         """
         days = self.controller.get_days()
         if days:
-            self.Disable()
-            s = ViewEvaluationSummary(parent=self, title='Evaluations Summary')
+            self.child = ViewEvaluationSummary(parent=self,
+                                               title='Evaluations Summary')
+            wx.CallAfter(self.child.Show)
         else:
             self.show_message("No evaluations in database, please import them")
 
@@ -333,21 +334,23 @@ class Core(wx.Frame):
         Callback bound to 'listcontrol' widget wich opens the edit frame to
         update player values when click on a listcontrol row
         """
-        item_id = event.m_itemIndex
+        item_id = event.GetSelection()
         player_code = self.panel.players.GetItemText(item_id)
         player = self.controller.get_player_by_code(player_code)
-        if player:
-            self.controller.set_temporary_object(player)
-            self.Disable()
-            view_edit = ViewPlayer(self, "Edit player", is_editor=True)
-            view_edit.panel.code.SetValue(str(player_code))
-            view_edit.panel.name.SetValue(player.name)
-            view_edit.panel.real_team.SetValue(player.real_team)
-            view_edit.panel.role.SetValue(player.role)
-            view_edit.panel.cost.SetValue(str(player.cost))
-            view_edit.SetWindowStyle(wx.STAY_ON_TOP)
-        else:
-            self.set_status_text('No player with code %s found' % player_code)
+        if not self.child:
+            self.child = ViewPlayer(self, "Edit player", is_editor=True)
+            wx.CallAfter(self.child.Show)
+            event.Skip()
+            if player:
+                self.controller.set_temporary_object(player)
+                self.child.panel.code.SetValue(str(player_code))
+                self.child.panel.name.SetValue(player.name)
+                self.child.panel.real_team.SetValue(player.real_team)
+                self.child.panel.role.SetValue(player.role)
+                self.child.panel.cost.SetValue(str(player.cost))
+            else:
+                self.set_status_text('No player with code %s found'
+                                     % player_code)
 
 
 class PanelCore(wx.Panel):
