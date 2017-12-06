@@ -63,10 +63,9 @@ class Core(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_delete_data, self.m_delete)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
-        self.Bind(wx.EVT_BUTTON, self.on_edit, self.panel.btn_edit)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.players)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_selected,
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_edit,
                   self.panel.players)
         self.Bind(wx.EVT_SIZE, self.on_size)
         size = (600, 600)
@@ -151,11 +150,6 @@ class Core(wx.Frame):
         child.Centre()
         child.Show()
 
-    def on_selected(self, event):
-        code = event.GetItem().GetText()
-        player = self.controller.get_player_by_code(code)
-        self.controller.set_temporary_object(player)
-
     # noinspection PyUnusedLocal
     def quit_subframe(self, event):
         """
@@ -239,6 +233,7 @@ class Core(wx.Frame):
         Callback bound to the 'new player' menu. It opens a frame
         to save a new player on database
         """
+        self.Disable()
         if not self.child:
             self.child = ViewPlayer(parent=self, title='New Player')
             wx.CallAfter(self.child.Show)
@@ -251,6 +246,7 @@ class Core(wx.Frame):
         Callback bound to the 'summary' player menu. It opens a frame
         to show the players summary
         """
+        self.Disable()
         players = self.controller.get_players()
         if players:
             self.child = ViewPlayerSummary(parent=self, title='Players Summary')
@@ -313,6 +309,7 @@ class Core(wx.Frame):
         Callback bound to the 'new evaluation' menu. It opens a frame
         to save a new evaluation on database
         """
+        self.Disable()
         if not self.child:
             self.child = ViewEvaluation(parent=self, title='New Evaluation')
             wx.CallAfter(self.child.Show)
@@ -325,6 +322,7 @@ class Core(wx.Frame):
         Callback bound to the 'summary' evaluation menu. It opens a frame
         to show the evaluations summary
         """
+        self.Disable()
         days = self.controller.get_days()
         if days:
             self.child = ViewEvaluationSummary(parent=self,
@@ -341,7 +339,10 @@ class Core(wx.Frame):
         Callback bound to 'list_control' widget wich opens the edit frame to
         update player values when click on a listcontrol row
         """
-        player = self.controller.get_temporary_object()
+        self.Disable()
+        code = event.GetItem().GetText()
+        player = self.controller.get_player_by_code(code)
+        self.controller.set_temporary_object(player)
         if not self.child:
             self.child = ViewPlayer(self, "Edit player", is_editor=True)
             wx.CallAfter(self.child.Show)
@@ -376,10 +377,8 @@ class PanelCore(wx.Panel):
         btn_sizer = wx.FlexGridSizer(rows=1, cols=3, hgap=5, vgap=5)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_refresh = wx.Button(self, wx.ID_OK, label="Refresh")
-        self.btn_edit = wx.Button(self, wx.ID_EDIT, label="Edit")
         btn_sizer.Add(self.btn_quit, 0, wx.EXPAND)
         btn_sizer.Add(self.btn_refresh, 0, wx.EXPAND)
-        btn_sizer.Add(self.btn_edit, 0, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rb_roles, 0, wx.EXPAND | wx.ALL, 5)

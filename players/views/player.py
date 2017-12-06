@@ -22,6 +22,7 @@ class ViewPlayer(wx.Frame):
         self.panel.btn_delete.Disable()
         self.SetSize((350, 250))
         # bindings
+        self.Bind(wx.EVT_CLOSE, self.on_quit)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_save, self.panel.btn_save)
         self.Bind(wx.EVT_BUTTON, self.delete_player, self.panel.btn_delete)
@@ -103,6 +104,7 @@ class ViewPlayer(wx.Frame):
         Callback bound to 'quit' button which destroys the frame and re-focus on
         main frame
         """
+        self.parent.Enable()
         self.Destroy()
 
 
@@ -160,20 +162,15 @@ class ViewPlayerSummary(wx.Frame):
         self.panel = PanelPlayerSummary(parent=self)
         self.SetSize((600, 600))
 
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_selected,
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_edit,
                   self.panel.player_list)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.on_list_column,
                   self.panel.player_list)
+        self.Bind(wx.EVT_CLOSE, self.on_quit)
         self.Bind(wx.EVT_BUTTON, self.on_quit, self.panel.btn_quit)
         self.Bind(wx.EVT_BUTTON, self.on_refresh, self.panel.btn_refresh)
-        self.Bind(wx.EVT_BUTTON, self.on_edit, self.panel.btn_edit)
         self.Bind(wx.EVT_RADIOBOX, self.on_refresh, self.panel.rb_roles)
         self.Centre()
-
-    def on_selected(self, event):
-        code = event.GetItem().GetText()
-        player = self.controller.get_player_by_code(code)
-        self.controller.set_temporary_object(player)
 
     # noinspection PyUnusedLocal
     def on_quit(self, event):
@@ -183,6 +180,7 @@ class ViewPlayerSummary(wx.Frame):
         Callback bound to 'quit' button which destroys the frame and re-focus on
         main frame
         """
+        self.parent.Enable()
         self.Destroy()
 
     # noinspection PyUnusedLocal
@@ -224,8 +222,11 @@ class ViewPlayerSummary(wx.Frame):
         Callback bound to 'list control' widget which opens the edit frame to
         update player values when click on a list control row
         """
+        code = event.GetItem().GetText()
+        player = self.controller.get_player_by_code(code)
         role = self.panel.rb_roles.GetStringSelection()
-        player = self.controller.get_temporary_object()
+        self.controller.set_temporary_object(player)
+        self.Disable()
         if not self.child:
             self.child = ViewPlayer(self, "Edit Player", is_editor=True)
             wx.CallAfter(self.child.Show)
@@ -286,10 +287,8 @@ class PanelPlayerSummary(wx.Panel):
         btn_sizer = wx.FlexGridSizer(rows=1, cols=3, hgap=5, vgap=5)
         self.btn_quit = wx.Button(self, wx.ID_CANCEL, label="Quit")
         self.btn_refresh = wx.Button(self, wx.ID_OK, label="Refresh")
-        self.btn_edit = wx.Button(self, wx.ID_EDIT, label="Edit")
         btn_sizer.Add(self.btn_quit, 0, wx.EXPAND)
         btn_sizer.Add(self.btn_refresh, 0, wx.EXPAND)
-        btn_sizer.Add(self.btn_edit, 0, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rb_roles, 0, wx.EXPAND | wx.ALL, 5)
