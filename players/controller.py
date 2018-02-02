@@ -119,7 +119,6 @@ class Controller(object):
         it creates a new player object
         """
         self.model.new_player(code, name, real_team, role, cost)
-        self.get_players_avg()
 
     def import_players(self, path):
         """
@@ -209,6 +208,7 @@ class Controller(object):
                     self.view.Update()
                     count += 1
                 self.commit_all_evaluations()
+                self.get_players_avg()
                 print "[INFO] Success!"
                 self.view.show_message('Evaluations successfully imported!')
                 self.view.set_progress(0)  # clear gauge
