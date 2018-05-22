@@ -26,7 +26,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 import sys
 # add the project path into the sys.path
-sys.path.append('/tmp/Fantacalcio/FantaStat2.0')
+sys.path.append(os.getcwd())
 # add the virtualenv site-packages path to the sys.path
 sys.path.append('/tmp/venv/Lib/site-packages')
 

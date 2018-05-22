@@ -430,8 +430,10 @@ class Controller(object):
         count = 1
         self.view.set_range(len(players))
         for player in players:
-            fv_avg = self.model.get_avg(player=player, field='fanta_vote')
-            v_avg = self.model.get_avg(player=player, field='vote')
+#            fv_avg = self.model.get_avg(player=player, field='fanta_vote')
+#            v_avg = self.model.get_avg(player=player, field='vote')
+            fv_avg = self.model.get_v_avg(player=player, fanta=True)
+            v_avg = self.model.get_v_avg(player=player, fanta=False)
             evaluated = self.model.get_evaluated(player)
             rate = 100 * evaluated / float(played)
             ev = self.model.get_evaluation(code=player.code, day=last_day)
@@ -475,3 +477,59 @@ class Controller(object):
         except IndexError:
             self.view.show_message("Invalid filename! "
                                    "Name must contain at least a number")
+
+    def generate_html(self, iterable):
+        table_header = '''
+        <table bgcolor="#FFFFF" border="2">
+          <tr bgcolor="66CCCC" >
+            <td align=center><B>codice</B></td>
+            <td align=center width=120><B>Giocatore</B></td>
+            <td align=center width=40><B>squadra</B></td>
+            <td align=center width=60><B>media FV</B></td>
+            <td align=center width=60><B>media V</B></td>
+            <td align=center width=60><B>affidabilita'</B></td>
+            <td align=center width=60><B>valutazione</B></td>
+          </tr>
+        '''
+        self.html.write(table_header)
+        filtered = [(k, self.d_avg.get(k)) for k in iterable]
+        sorted_players = sorted(filtered, key=lambda x: x[1][0], reverse=True)
+        for record in sorted_players:
+            key, data = record
+            player = self.get_player_by_code(int(key))
+            fv_avg, v_avg, rate, cost = data
+            row = '''
+            <tr>
+              <td align=center>%s</td>
+              <td width=120>%s</td>
+              <td align=center>%s</td>
+              <td width=60 align=center>%s</td>
+              <td width=60 align=center>%s</td>
+              <td width=60 align=center>%s</td>
+              <td width=60 align=center>%s</td>
+            </tr>''' % (key, player.name, player.real_team, 
+                        round(float(fv_avg), 3), round(float(v_avg), 3), 
+                        round(float(rate), 3), cost)
+            self.html.write(row)
+        self.html.write('</table>')
+
+    def build_report(self):
+        players_dict = self.get_avg_dict()
+        gk = [key for key in players_dict if key < 200]
+        df = [key for key in players_dict if 200 < key < 500]
+        mf = [key for key in players_dict if 500 < key < 800]
+        fw = [key for key in players_dict if key > 800]
+        html_name = "players_stat.html"
+        self.html = open(html_name, "w")
+        for role, players in [("Portieri", gk), ("Difensori", df), 
+                              ("Centrocampisti", mf), ("Attaccanti", fw)]:
+            print "INFO: generating %s report..." % role
+            self.html.write("<br><strong>%s</strong><br>" % role)
+            self.generate_html(players)
+            print "INFO: report %s successfully created!" % role
+        self.html.close()
+        print "INFO: file <%s> successfully created!" % html_name
+
+
+
+

@@ -37,6 +37,7 @@ class Core(wx.Frame):
         self.menubar.Append(m_player, "Players")
         self.m_new_player = m_player.Append(-1, "New Player", "New Player")
         self.m_players_summary = m_player.Append(-1, "Summary", "Summary")
+        self.m_stat = m_player.Append(-1, "Statistic", "Statistic")
         m_ev = wx.Menu()
         self.menubar.Append(m_ev, "Evaluations")
         self.m_new_ev = m_ev.Append(-1, "New Evaluation", "New Evaluation")
@@ -57,6 +58,7 @@ class Core(wx.Frame):
         self.Bind(wx.EVT_MENU, self.new_player, self.m_new_player)
         self.Bind(wx.EVT_MENU, self.on_import_player, self.m_players_import)
         self.Bind(wx.EVT_MENU, self.on_players_summary, self.m_players_summary)
+        self.Bind(wx.EVT_MENU, self.on_statistic, self.m_stat)
         self.Bind(wx.EVT_MENU, self.new_evaluation, self.m_new_ev)
         self.Bind(wx.EVT_MENU, self.on_import_evaluation, self.m_ev_import)
         self.Bind(wx.EVT_MENU, self.on_evs_summary, self.m_ev_summary)
@@ -254,6 +256,16 @@ class Core(wx.Frame):
             self.child.fill_player_list(players)
         else:
             self.show_message("No players in database, please import them")
+
+    # noinspection PyUnusedLocal
+    def on_statistic(self, event):
+        """
+        on_statistic(event) -> None
+
+        Callback bound to the 'statistic' player menu. It builds a html-report
+        with all player statistics
+        """
+        self.controller.build_report()
 
     # noinspection PyUnusedLocal
     def on_delete_data(self, event):

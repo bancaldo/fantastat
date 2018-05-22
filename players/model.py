@@ -335,3 +335,34 @@ class Model(object):
         """
         return Evaluation.objects.filter(player=player).filter(
             vote__gt=0).count()
+
+    @staticmethod
+    def get_fv_avg(player):
+        """
+        get_fv_avg(player) -> float
+
+        it returns the fanta vote avg value of a player
+        """
+        evaluations = player.evaluation_set.all()
+        f_votes = [e.fanta_vote for e in evaluations if e.vote > 0]
+        fv_avg = float(sum(f_votes))/len(f_votes)
+        return fv_avg
+
+    @staticmethod
+    def get_v_avg(player, fanta=True):
+        """
+        get_v_avg(player, fanta=True) -> float
+
+        it returns the fanta vote avg value of a player if flag 'fanta'
+        is True, else it returns the pure vote avg value.
+        """
+        evaluations = player.evaluation_set.all()
+        if fanta:
+            votes = [e.fanta_vote for e in evaluations if e.vote > 0]
+        else:
+            votes = [e.vote for e in evaluations if e.vote > 0]
+        try:
+            v_avg = float(sum(votes))/len(votes)
+            return v_avg
+        except ZeroDivisionError:
+            return 0.0

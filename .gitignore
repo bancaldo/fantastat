@@ -7,3 +7,5 @@ build
 players.db
 *.spec
 pyinstaller*
+*.html
+*sublime*
