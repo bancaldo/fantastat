@@ -216,15 +216,15 @@ class Core(wx.Frame):
                     'Invalid file format: file strings must be:'
                     '\n nnn|NAME|TEAM|n.n|n.n|n')
             else:
-                index = self.panel.players.InsertStringItem(sys.maxint,
+                index = self.panel.players.InsertItem(sys.maxint,
                                                             str(player.code))
-                self.panel.players.SetStringItem(index, 1, str(player.name))
-                self.panel.players.SetStringItem(index, 2,
+                self.panel.players.SetItem(index, 1, str(player.name))
+                self.panel.players.SetItem(index, 2,
                                                  str(player.real_team))
-                self.panel.players.SetStringItem(index, 3, str(avg_fv))
-                self.panel.players.SetStringItem(index, 4, str(avg_v))
-                self.panel.players.SetStringItem(index, 5, str(rate))
-                self.panel.players.SetStringItem(index, 6, str(d_cost))
+                self.panel.players.SetItem(index, 3, str(avg_fv))
+                self.panel.players.SetItem(index, 4, str(avg_v))
+                self.panel.players.SetItem(index, 5, str(rate))
+                self.panel.players.SetItem(index, 6, str(d_cost))
 
     # Player section
     # noinspection PyUnusedLocal
@@ -404,5 +404,5 @@ class FileBrowser(wx.FileDialog):
         wildcard = "File Evaluations (*.txt)|*.txt|" "Tutti i files (*.*)|*.*"
         super(FileBrowser, self).__init__(parent=parent, message='',
                                           defaultDir=ddir, wildcard=wildcard,
-                                          style=wx.OPEN)
+                                          style=wx.FD_OPEN)
         self.ShowModal()

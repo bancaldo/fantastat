@@ -28,7 +28,7 @@ import sys
 # add the project path into the sys.path
 sys.path.append(os.getcwd())
 # add the virtualenv site-packages path to the sys.path
-sys.path.append('/tmp/venv/Lib/site-packages')
+sys.path.append('venv/Lib/site-packages')
 
 
 # noinspection PyUnresolvedReferences

@@ -206,13 +206,13 @@ class ViewPlayerSummary(wx.Frame):
         It fills list control with player values
         """
         for player in players:
-            index = self.panel.player_list.InsertStringItem(sys.maxint,
+            index = self.panel.player_list.InsertItem(sys.maxint,
                                                             str(player.code))
-            self.panel.player_list.SetStringItem(index, 1, str(player.name))
-            self.panel.player_list.SetStringItem(index, 2,
+            self.panel.player_list.SetItem(index, 1, str(player.name))
+            self.panel.player_list.SetItem(index, 2,
                                                  str(player.real_team))
-            self.panel.player_list.SetStringItem(index, 3, str(player.role))
-            self.panel.player_list.SetStringItem(index, 4, str(player.cost))
+            self.panel.player_list.SetItem(index, 3, str(player.role))
+            self.panel.player_list.SetItem(index, 4, str(player.cost))
 
     # noinspection PyUnusedLocal
     def on_edit(self, event):

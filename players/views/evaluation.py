@@ -197,19 +197,19 @@ class ViewEvaluationSummary(wx.Frame):
         It fills list control with evaluation values
         """
         for evaluation in evaluations:
-            index = self.panel.evaluation_list.InsertStringItem(
+            index = self.panel.evaluation_list.InsertItem(
                 sys.maxint, str(evaluation.player.code))
-            self.panel.evaluation_list.SetStringItem(
+            self.panel.evaluation_list.SetItem(
                 index, 1, str(evaluation.player.name))
-            self.panel.evaluation_list.SetStringItem(
+            self.panel.evaluation_list.SetItem(
                 index, 2, str(evaluation.player.real_team))
-            self.panel.evaluation_list.SetStringItem(
+            self.panel.evaluation_list.SetItem(
                 index, 3, str(evaluation.fanta_vote))
-            self.panel.evaluation_list.SetStringItem(
+            self.panel.evaluation_list.SetItem(
                 index, 4, str(evaluation.vote))
-            self.panel.evaluation_list.SetStringItem(
+            self.panel.evaluation_list.SetItem(
                 index, 5, str(evaluation.cost))
-            self.panel.evaluation_list.SetStringItem(
+            self.panel.evaluation_list.SetItem(
                 index, 6, str(evaluation.day))
 
     # noinspection PyUnusedLocal
