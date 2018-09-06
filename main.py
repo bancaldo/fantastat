@@ -14,8 +14,8 @@ player cost
 
 Modules
 =====
-Django for ORM only
-Wx for graphics
+Django 1.11 for ORM only
+Wx 4 (Phoenix) for graphics
 """
 
 import os
@@ -26,9 +26,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 import sys
 # add the project path into the sys.path
+venv_path = '\\'.join([os.getcwd(), 'venv\\Lib\\site-packages'])
 sys.path.append(os.getcwd())
 # add the virtualenv site-packages path to the sys.path
-sys.path.append('venv/Lib/site-packages')
+sys.path.append(venv_path)
+sys.path = [pth for pth in sys.path if 'wx-3' not in pth] # remove old wx-3
 
 
 # noinspection PyUnresolvedReferences

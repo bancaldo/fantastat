@@ -493,7 +493,9 @@ class Controller(object):
         '''
         self.html.write(table_header)
         filtered = [(k, self.d_avg.get(k)) for k in iterable]
-        sorted_players = sorted(filtered, key=lambda x: x[1][0], reverse=True)
+        # metto in ordine, prima per presenze, poi per fanta media
+        sorted_players = sorted(filtered, key=lambda x: (x[1][2], x[1][0]), 
+                                reverse=True)
         for record in sorted_players:
             key, data = record
             player = self.get_player_by_code(int(key))
