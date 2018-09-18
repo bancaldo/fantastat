@@ -53,7 +53,7 @@ class ViewEvaluation(wx.Frame):
                 self.show_message("New Evaluation %s code %s stored!"
                                   % (day, code))
             self.parent.on_refresh(None)
-            self.Destroy()
+            # self.Destroy()
 
     # noinspection PyUnusedLocal
     def delete_evaluation(self, event):
