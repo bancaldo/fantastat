@@ -247,7 +247,10 @@ class Model(object):
 
         It adds a new Evaluation object to bulk_evaluations_to_create list
         """
+
         player = self.get_player_by_code(int(code))
+        print "INFO: add new evaluation to code -> %s" % code
+        # print code, fv, v, cost, day
         ev = Evaluation(fanta_vote=float(fv), vote=float(v),
                         cost=int(cost), day=int(day), player=player)
         self.bulk_evaluations_to_create.append(ev)

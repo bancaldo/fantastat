@@ -196,11 +196,14 @@ class Controller(object):
 
                 for s in data:
                     code, name, real_team, fv, v, cost = s.strip().split('|')
+                    code = code.replace("\xef\xbb\xbf", "")
+                    cost = cost.replace("\xc2\xa0", "") # avoid Non-breaking sp.
                     player = self.get_player_by_code(int(code))
                     if not player:
                         role = self.get_role(code)
                         self.new_player(code, name, real_team, role, cost)
                         print "INFO: new player %s stored!" % code
+
                     self.import_ev_bulk(code, fv, v, cost, day)
                     self.view.set_status_text("importing data %s/%s"
                                               % (count, len(data)))
