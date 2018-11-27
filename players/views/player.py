@@ -1,14 +1,6 @@
 import wx
-import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
-
-
-OK = wx.OK | wx.ICON_EXCLAMATION
-ACV = wx.ALIGN_CENTER_VERTICAL
-ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
-YN = wx.YES_NO | wx.ICON_WARNING
-DD = wx.CB_DROPDOWN
-HS = wx.LB_HSCROLL
+from players.views.styles import OK, ACV, YN, DD
 
 
 class ViewPlayer(wx.Frame):
@@ -206,11 +198,9 @@ class ViewPlayerSummary(wx.Frame):
         It fills list control with player values
         """
         for player in players:
-            index = self.panel.player_list.InsertItem(sys.maxint,
-                                                            str(player.code))
+            index = self.panel.player_list.InsertItem(10000, str(player.code))
             self.panel.player_list.SetItem(index, 1, str(player.name))
-            self.panel.player_list.SetItem(index, 2,
-                                                 str(player.real_team))
+            self.panel.player_list.SetItem(index, 2, str(player.real_team))
             self.panel.player_list.SetItem(index, 3, str(player.role))
             self.panel.player_list.SetItem(index, 4, str(player.cost))
 

@@ -1,13 +1,9 @@
 import os
-import sys
 import wx
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
-from player import ViewPlayer, ViewPlayerSummary
-from evaluation import ViewEvaluation, ViewEvaluationSummary
-
-
-OK = wx.OK | wx.ICON_EXCLAMATION
-ACV = wx.ALIGN_CENTER_VERTICAL
+from players.views.player import ViewPlayer, ViewPlayerSummary
+from players.views.evaluation import ViewEvaluation, ViewEvaluationSummary
+from players.views.styles import OK
 
 
 class AutoWidthListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
@@ -21,7 +17,6 @@ class Core(wx.Frame):
         super(Core, self).__init__(parent=parent, title=title)
         self.parent = parent
         self.controller = controller
-        self.child = None
         self.panel = PanelCore(self)
         self.panel.SetBackgroundColour('LightGray')
         self.status_bar = self.CreateStatusBar(2)
@@ -35,22 +30,23 @@ class Core(wx.Frame):
         # Player menu
         m_player = wx.Menu()
         self.menubar.Append(m_player, "Players")
-        self.m_new_player = m_player.Append(-1, "New Player", "New Player")
-        self.m_players_summary = m_player.Append(-1, "Summary", "Summary")
-        self.m_stat = m_player.Append(-1, "Statistic", "Statistic")
+        self.m_new_player = m_player.Append(200, "New Player", "New Player")
+        self.m_players_summary = m_player.Append(201, "Summary", "Summary")
+        self.m_stat = m_player.Append(202, "Statistic", "Statistic")
         m_ev = wx.Menu()
         self.menubar.Append(m_ev, "Evaluations")
-        self.m_new_ev = m_ev.Append(-1, "New Evaluation", "New Evaluation")
-        self.m_ev_summary = m_ev.Append(-1, "Summary", "Summary")
+        self.m_new_ev = m_ev.Append(203, "New Evaluation", "New Evaluation")
+        self.m_ev_summary = m_ev.Append(204, "Summary", "Summary")
         m_import = wx.Menu()
         self.menubar.Append(m_import, "Import")
-        self.m_ev_import = m_import.Append(-1, "import evaluations",
+        self.m_ev_import = m_import.Append(205, "import evaluations",
                                            "import evaluations")
-        self.m_players_import = m_import.Append(-1, "import players",
+        self.m_players_import = m_import.Append(206, "import players",
                                                 "import players")
         m_reset = wx.Menu()
         self.menubar.Append(m_reset, "Reset")
-        self.m_delete = m_reset.Append(-1, "Delete all data", "Delete all data")
+        self.m_delete = m_reset.Append(207, "Delete all data",
+                                       "Delete all data")
 
         # Bindings
         # player bindings
@@ -142,30 +138,6 @@ class Core(wx.Frame):
         """
         wx.MessageBox(string, 'core info', OK)
 
-    @staticmethod
-    def show_subframe(child):
-        """
-        show_subframe(widget) -> None
-
-        It shows the widget subframe in a centred position
-        """
-        child.Centre()
-        child.Show()
-
-    # noinspection PyUnusedLocal
-    def quit_subframe(self, event):
-        """
-        quit_subframe(event) -> None
-
-        It quits the subframe and enables the parent frame
-        """
-        subframe = event.GetEventObject().GetParent()
-        if isinstance(subframe, wx.Panel):
-            subframe = subframe.GetParent()
-        self.Enable()
-        self.SetFocus()
-        subframe.Destroy()
-
     # noinspection PyUnusedLocal
     def on_refresh(self, event):
         """
@@ -216,11 +188,9 @@ class Core(wx.Frame):
                     'Invalid file format: file strings must be:'
                     '\n nnn|NAME|TEAM|n.n|n.n|n')
             else:
-                index = self.panel.players.InsertItem(sys.maxint,
-                                                            str(player.code))
+                index = self.panel.players.InsertItem(10000, str(player.code))
                 self.panel.players.SetItem(index, 1, str(player.name))
-                self.panel.players.SetItem(index, 2,
-                                                 str(player.real_team))
+                self.panel.players.SetItem(index, 2, str(player.real_team))
                 self.panel.players.SetItem(index, 3, str(avg_fv))
                 self.panel.players.SetItem(index, 4, str(avg_v))
                 self.panel.players.SetItem(index, 5, str(rate))
@@ -236,9 +206,8 @@ class Core(wx.Frame):
         to save a new player on database
         """
         self.Disable()
-        if not self.child:
-            self.child = ViewPlayer(parent=self, title='New Player')
-            wx.CallAfter(self.child.Show)
+        child = ViewPlayer(parent=self, title='New Player')
+        wx.CallAfter(child.Show)
 
     # noinspection PyUnusedLocal
     def on_players_summary(self, event):
@@ -251,9 +220,9 @@ class Core(wx.Frame):
         self.Disable()
         players = self.controller.get_players()
         if players:
-            self.child = ViewPlayerSummary(parent=self, title='Players Summary')
-            wx.CallAfter(self.child.Show)
-            self.child.fill_player_list(players)
+            child = ViewPlayerSummary(parent=self, title='Players Summary')
+            wx.CallAfter(child.Show)
+            child.fill_player_list(players)
         else:
             self.show_message("No players in database, please import them")
 
@@ -291,9 +260,9 @@ class Core(wx.Frame):
         Callback bound to the 'import players' menu. It opens a file browser
         to choose the standard MCCnn.txt players file
         """
-        path = FileBrowser(self).GetPath()
-        if path:
-            self.controller.import_players(path)
+        input_file = self.get_file(extension="txt")
+        if input_file:
+            self.controller.import_players(input_file)
             self.m_players_import.Enable(False)
         else:
             self.set_status_text('No file selected!')
@@ -307,9 +276,9 @@ class Core(wx.Frame):
         Callback bound to the 'import evaluations' menu. It opens a file browser
         to choose the standard MCCnn.txt evaluations file
         """
-        path = FileBrowser(self).GetPath()
-        if path:
-            self.controller.import_evaluations(path)
+        input_file = self.get_file(extension="txt")
+        if input_file:
+            self.controller.import_evaluations(input_file)
         else:
             self.set_status_text('No file selected!')
 
@@ -322,9 +291,8 @@ class Core(wx.Frame):
         to save a new evaluation on database
         """
         self.Disable()
-        if not self.child:
-            self.child = ViewEvaluation(parent=self, title='New Evaluation')
-            wx.CallAfter(self.child.Show)
+        child = ViewEvaluation(parent=self, title='New Evaluation')
+        wx.CallAfter(child.Show)
 
     # noinspection PyUnusedLocal
     def on_evs_summary(self, event):
@@ -337,9 +305,9 @@ class Core(wx.Frame):
         self.Disable()
         days = self.controller.get_days()
         if days:
-            self.child = ViewEvaluationSummary(parent=self,
-                                               title='Evaluations Summary')
-            wx.CallAfter(self.child.Show)
+            child = ViewEvaluationSummary(parent=self,
+                                          title='Evaluations Summary')
+            wx.CallAfter(child.Show)
         else:
             self.show_message("No evaluations in database, please import them")
 
@@ -355,17 +323,34 @@ class Core(wx.Frame):
         code = event.GetItem().GetText()
         player = self.controller.get_player_by_code(code)
         self.controller.set_temporary_object(player)
-        if not self.child:
-            self.child = ViewPlayer(self, "Edit player", is_editor=True)
-            wx.CallAfter(self.child.Show)
-            if player:
-                self.child.panel.code.ChangeValue(str(player.code))
-                self.child.panel.name.ChangeValue(str(player.name))
-                self.child.panel.real_team.ChangeValue(str(player.real_team))
-                self.child.panel.role.ChangeValue(str(player.role))
-                self.child.panel.cost.ChangeValue(str(player.cost))
-            else:
-                self.set_status_text('No player found')
+        child = ViewPlayer(self, "Edit player", is_editor=True)
+        wx.CallAfter(child.Show)
+        if player:
+            child.panel.code.ChangeValue(str(player.code))
+            child.panel.name.ChangeValue(str(player.name))
+            child.panel.real_team.ChangeValue(str(player.real_team))
+            child.panel.role.ChangeValue(str(player.role))
+            child.panel.cost.ChangeValue(str(player.cost))
+        else:
+            self.set_status_text('No player found')
+
+    # noinspection PyUnusedLocal
+    def get_file(self, extension="txt"):
+        """
+        get_file() -> path
+
+        Call wx.FileDialog to open txt file
+        """
+        ext = "(*.%s)|*.%s|" % (extension, extension)
+        input_file = ""
+        wildcard = "Evaluations File %s" "All files (*.*)|*.*" % ext
+        browser = wx.FileDialog(parent=self, message='Open file',
+                                defaultDir=os.getcwd(), wildcard=wildcard,
+                                style=wx.FD_OPEN)
+        if browser.ShowModal() == wx.ID_OK:
+            input_file = browser.GetPath()
+        browser.Destroy()
+        return input_file
 
 
 class PanelCore(wx.Panel):
@@ -397,12 +382,3 @@ class PanelCore(wx.Panel):
         sizer.Add(players_box, 1, wx.EXPAND | wx.ALL, 5)
         sizer.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(sizer)
-
-
-class FileBrowser(wx.FileDialog):
-    def __init__(self, parent, ddir=os.getcwd()):
-        wildcard = "File Evaluations (*.txt)|*.txt|" "Tutti i files (*.*)|*.*"
-        super(FileBrowser, self).__init__(parent=parent, message='',
-                                          defaultDir=ddir, wildcard=wildcard,
-                                          style=wx.FD_OPEN)
-        self.ShowModal()

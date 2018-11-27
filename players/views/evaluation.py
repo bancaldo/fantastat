@@ -1,14 +1,7 @@
 import wx
 import sys
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
-
-
-OK = wx.OK | wx.ICON_EXCLAMATION
-ACV = wx.ALIGN_CENTER_VERTICAL
-ACH = wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
-YN = wx.YES_NO | wx.ICON_WARNING
-DD = wx.CB_DROPDOWN
-HS = wx.LB_HSCROLL
+from players.views.styles import OK, ACV, DD, YN
 
 
 class ViewEvaluation(wx.Frame):
@@ -63,7 +56,7 @@ class ViewEvaluation(wx.Frame):
         Callback bound to 'delete' button which deletes an evaluation from db
         """
         choice = wx.MessageBox('Deleting evaluation...are you sure?', 'warning',
-                               wx.YES_NO | wx.ICON_WARNING)
+                               style=YN)
         if choice == wx.YES:
             code = self.panel.code.GetValue()
             day = self.panel.day.GetValue()
@@ -198,7 +191,7 @@ class ViewEvaluationSummary(wx.Frame):
         """
         for evaluation in evaluations:
             index = self.panel.evaluation_list.InsertItem(
-                sys.maxint, str(evaluation.player.code))
+                sys.maxsize, str(evaluation.player.code))
             self.panel.evaluation_list.SetItem(
                 index, 1, str(evaluation.player.name))
             self.panel.evaluation_list.SetItem(

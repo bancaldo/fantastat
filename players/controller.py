@@ -1,20 +1,18 @@
 import os
 import re
-import wx
-from model import Model
+from players.model import Model
 from players.views.core import Core
 from django.db.utils import OperationalError
 
 
-class Controller(object):
+class Controller:
     def __init__(self):
-        app = wx.App()
         self.model = Model()
         self.view = Core(parent=None, controller=self, title='Players')
         self.d_evaluations = {}
         self.d_avg = {}
         self.init_view()
-        app.MainLoop()
+        self.html = None
 
     def init_view(self):
         """
@@ -28,8 +26,9 @@ class Controller(object):
             if players:
                 self.view.m_players_import.Enable(False)
                 self.enable_widgets(True)
-                evaluations = self.get_evaluations(day=1, role='goalkeeper')
-                if evaluations:
+                days = self.model.get_days()
+                if days:
+                    self.get_evaluations(day=days[0], role='goalkeeper')
                     self.get_players_avg()
                     self.view.fill_players(players)
                     self.view.set_status_text("Found %s players on db" %
@@ -130,7 +129,7 @@ class Controller(object):
         with open(path) as f:
             data = [line.strip() for line in f.readlines()]
         self.view.set_status_text("importing players")
-        print "INFO: importing players..."
+        print("INFO: importing players...")
         count = 1
         players_dict = self.model.get_players_data()
         self.view.set_range(len(data))
@@ -150,7 +149,7 @@ class Controller(object):
             self.view.Update()
             count += 1
         self.commit_all_players()
-        print "INFO: Success!"
+        print("INFO: Success!")
         self.view.show_message('Players successfully imported!')
         self.view.set_progress(0)  # clear gauge
         self.show_data()
@@ -185,24 +184,24 @@ class Controller(object):
             if day:
                 with open(path) as f:
                     data = [line.strip() for line in f.readlines()]
-                print "INFO: importing evaluations..."
+                print("INFO: importing evaluations...")
                 self.view.set_range(len(data))
                 count = 1
                 # string sample: 100|NAME|ROM|6.5|6.5|19
                 day_evs = self.get_evaluations(day=day, role='goalkeeper')
                 if day_evs:
                     self.delete_day_evaluations(day)
-                    print "INFO: Deleting all evaluations of day %s..." % day
+                    print("INFO: Deleting all evaluations of day %s..." % day)
 
                 for s in data:
                     code, name, real_team, fv, v, cost = s.strip().split('|')
                     code = code.replace("\xef\xbb\xbf", "")
-                    cost = cost.replace("\xc2\xa0", "") # avoid Non-breaking sp.
+                    cost = cost.replace("\xc2\xa0", "")  # avoid Non-break sp.
                     player = self.get_player_by_code(int(code))
                     if not player:
                         role = self.get_role(code)
                         self.new_player(code, name, real_team, role, cost)
-                        print "INFO: new player %s stored!" % code
+                        print("INFO: new player %s stored!" % code)
 
                     self.import_ev_bulk(code, fv, v, cost, day)
                     self.view.set_status_text("importing data %s/%s"
@@ -212,7 +211,7 @@ class Controller(object):
                     count += 1
                 self.commit_all_evaluations()
                 self.get_players_avg()
-                print "INFO: Success!"
+                print("INFO: Success!")
                 self.view.show_message('Evaluations successfully imported!')
                 self.view.set_progress(0)  # clear gauge
                 self.init_view()
@@ -257,7 +256,7 @@ class Controller(object):
         It deletes all the evaluations stored in database with day=day
         """
         self.model.delete_day_evaluations(day)
-        print "INFO: all evaluations with day %s deleted!" % day
+        print("INFO: all evaluations with day %s deleted!" % day)
 
     def commit_all_players(self):
         """
@@ -427,14 +426,14 @@ class Controller(object):
         """
         days = self.model.get_days()
         played = len(days)
-        print "INFO: days played -> %s" % played
+        print("INFO: days played -> %s" % played)
         last_day = self.model.get_last_imported_day()
         players = self.model.get_players()
         count = 1
         self.view.set_range(len(players))
         for player in players:
-#            fv_avg = self.model.get_avg(player=player, field='fanta_vote')
-#            v_avg = self.model.get_avg(player=player, field='vote')
+            # fv_avg = self.model.get_avg(player=player, field='fanta_vote')
+            # v_avg = self.model.get_avg(player=player, field='vote')
             fv_avg = self.model.get_v_avg(player=player, fanta=True)
             v_avg = self.model.get_v_avg(player=player, fanta=False)
             evaluated = self.model.get_evaluated(player)
@@ -528,13 +527,9 @@ class Controller(object):
         self.html = open(html_name, "w")
         for role, players in [("Portieri", gk), ("Difensori", df), 
                               ("Centrocampisti", mf), ("Attaccanti", fw)]:
-            print "INFO: generating %s report..." % role
+            print("INFO: generating %s report..." % role)
             self.html.write("<br><strong>%s</strong><br>" % role)
             self.generate_html(players)
-            print "INFO: report %s successfully created!" % role
+            print("INFO: report %s successfully created!" % role)
         self.html.close()
-        print "INFO: file <%s> successfully created!" % html_name
-
-
-
-
+        print("INFO: file <%s> successfully created!" % html_name)
